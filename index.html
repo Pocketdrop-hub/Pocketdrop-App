@@ -427,10 +427,10 @@
   #printSheet{ display:none; }
   @media print{
     body.printing > *:not(#printSheet){ display:none !important; }
-    body.printing #printSheet{ display:grid; grid-template-columns:repeat(4,1fr); gap:6mm; padding:6mm; background:#fff; }
-    #printSheet .lbl{ break-inside:avoid; text-align:center; border:1px solid #999; padding:3mm; font-family:Arial,sans-serif; }
-    #printSheet .lbl svg{ width:100%; height:auto; }
-    #printSheet .l-name{ font-weight:700; font-size:11pt; } #printSheet .l-sub{ font-size:9pt; color:#333; } #printSheet .l-price{ font-weight:700; font-size:12pt; }
+    body.printing #printSheet{ display:grid; grid-template-columns:repeat(auto-fill, calc(var(--qr, 20mm) + 4mm)); gap:3mm; padding:6mm; background:#fff; justify-content:start; }
+    #printSheet .lbl{ break-inside:avoid; text-align:center; border:0.3mm solid #999; padding:1mm; font-family:Arial,sans-serif; width:calc(var(--qr, 20mm) + 4mm); box-sizing:border-box; overflow:hidden; }
+    #printSheet .lbl svg{ width:var(--qr, 20mm); height:var(--qr, 20mm); display:block; margin:0 auto; }
+    #printSheet .l-name{ font-weight:700; font-size:6.5pt; line-height:1.15; margin-top:0.5mm; } #printSheet .l-sub{ font-size:5.5pt; color:#333; line-height:1.15; }
   }
 </style>
 </head>
@@ -483,7 +483,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v15</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -663,6 +663,8 @@
         <hr class="admin-divider">
         <div class="admin-section-title">QR-labels printen</div>
         <div class="field"><label>Set</label><select id="qrSetSelect"></select></div>
+        <div class="field"><label>Grootte van de QR-code op het label</label>
+          <select id="qrSizeSelect"><option value="15">Heel klein (15 mm)</option><option value="20" selected>Klein (20 mm)</option><option value="25">Middel (25 mm)</option><option value="35">Groot (35 mm)</option></select></div>
         <button type="button" class="btn btn-primary" id="qrPrintBtn">Labels printen</button>
 
         <hr class="admin-divider">
@@ -1018,7 +1020,7 @@ function filteredSorted(){
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   const sort = document.getElementById("sortSelect").value;
   let list = allCards.filter(c => {
-    const matchSet = activeSet === "Alle" || c.set === activeSet;
+    const matchSet = q || activeSet === "Alle" || c.set === activeSet;
     const matchQuery = cardMatches(c, q);
     return matchSet && matchQuery;
   });
@@ -1153,7 +1155,7 @@ function render(){
   const grid = document.getElementById("grid");
   const list = filteredSorted();
   document.getElementById("resultCount").textContent =
-    list.length + (list.length === 1 ? " kaart" : " kaarten") + (activeSet !== "Alle" ? " in " + activeSet : "");
+    list.length + (list.length === 1 ? " kaart" : " kaarten") + (document.getElementById("searchInput").value.trim() ? " (alle sets)" : (activeSet !== "Alle" ? " in " + activeSet : ""));
 
   grid.innerHTML = "";
   if (!list.length){
@@ -1601,6 +1603,7 @@ function printLabels(cards){
   $("printSheet").innerHTML = cards.map(c =>
     `<div class="lbl">${QR.svg(cardUrl(c))}<div class="l-name">${escapeHTML(c.name)}</div><div class="l-sub">${escapeHTML(c.set)} · ${escapeHTML(c.number || "")}</div></div>`
   ).join("");
+  document.body.style.setProperty("--qr", (document.getElementById("qrSizeSelect").value || "20") + "mm");
   document.body.classList.add("printing");
   setTimeout(() => window.print(), 150);
 }
