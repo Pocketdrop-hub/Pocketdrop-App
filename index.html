@@ -655,6 +655,10 @@
           <button type="button" class="btn btn-ghost" id="apiTestBtn">Verbinding testen</button>
         </div>
         <div class="sf-msg" id="apiMsg"></div>
+        <div class="admin-section-title" style="margin-top:18px;">Dubbele rijen opruimen</div>
+        <button type="button" class="btn btn-yellow" id="dedupeBtn">Dubbele kaarten in de sheet samenvoegen</button>
+        <div class="sf-msg" id="dedupeMsg"></div>
+        <div class="admin-note">Kaarten met dezelfde set, nummer en naam worden één rij. De aantallen worden opgeteld. De sheet kan enkele minuten nodig hebben om in de app te verschijnen.</div>
       </div>
     </div>
   </div>
@@ -1421,24 +1425,25 @@ function parseMoney(v){
 /* ---- tijdelijke wijzigingen (tot de gepubliceerde CSV bijgewerkt is) ---- */
 function loadPending(){ try { return JSON.parse(localStorage.getItem(PENDING_KEY) || "[]"); } catch(e){ return []; } }
 function savePending(list){ try { localStorage.setItem(PENDING_KEY, JSON.stringify(list)); } catch(e){} }
+function nkey(name, set, number){ return normKeyPart(set) + "|" + normKeyPart(number) + "|" + normKeyPart(name); }
 function addPending(p){
-  const nk = cacheKey(p.name, p.set, p.number);
-  const list = loadPending().filter(x => x.oldKey !== p.oldKey && cacheKey(x.name, x.set, x.number) !== nk);
+  const nk = nkey(p.name, p.set, p.number);
+  const list = loadPending().filter(x => x.oldKey !== p.oldKey && nkey(x.name, x.set, x.number) !== nk);
   list.push(p); savePending(list);
 }
 function applyPending(cards){
   const pend = loadPending(), out = [], now = Date.now();
   pend.forEach(p => {
     if (now - p.at > PENDING_TTL) return;
-    const nk = cacheKey(p.name, p.set, p.number);
-    let i = cards.findIndex(c => cacheKey(c.name, c.set, c.number) === nk);
-    if (i < 0) i = cards.findIndex(c => cacheKey(c.name, c.set, c.number) === p.oldKey);
+    const nk = nkey(p.name, p.set, p.number);
+    let i = cards.findIndex(c => nkey(c.name, c.set, c.number) === nk);
+    if (i < 0) i = cards.findIndex(c => nkey(c.name, c.set, c.number) === p.oldKey);
     if (i < 0){
       cards.push({ set: p.set, number: p.number, name: p.name, qty: p.qty, cmLink: "", lowest: null, vkp: p.vkp, imgKey: null, manual: false });
       out.push(p); return;
     }
     const c = cards[i];
-    if (c.qty === p.qty && c.vkp === p.vkp && cacheKey(c.name, c.set, c.number) === nk) return;
+    if (c.qty === p.qty && c.vkp === p.vkp && nkey(c.name, c.set, c.number) === nk) return;
     cards[i] = Object.assign({}, c, { set: p.set, number: p.number, name: p.name, qty: p.qty, vkp: p.vkp });
     out.push(p);
   });
@@ -1464,7 +1469,7 @@ async function apiCall(payload){
 function afterWrite(oldCard, j, fields){
   const o = oldCard.orig || oldCard;
   const p = {
-    oldKey: cacheKey(o.name, o.set, o.number),
+    oldKey: nkey(o.name, o.set, o.number),
     set: fields.set, number: fields.number, name: fields.name,
     qty: toNumber(j.qty), vkp: toNumber(j.vkp), at: Date.now()
   };
@@ -1477,7 +1482,7 @@ function afterWrite(oldCard, j, fields){
   try { localStorage.setItem(DATA_CACHE_KEY, JSON.stringify({ cards: csvCards, savedAt: Date.now() })); } catch(e){}
   combine();
   renderApp();
-  return allCards.find(c => cacheKey(c.name, c.set, c.number) === cacheKey(p.name, p.set, p.number)) || null;
+  return allCards.find(c => nkey(c.name, c.set, c.number) === nkey(p.name, p.set, p.number)) || null;
 }
 
 /* ---- kaartpagina: personeelsdeel ---- */
@@ -1638,12 +1643,22 @@ $("apiSaveBtn").addEventListener("click", () => {
   try { localStorage.setItem(API_SECRET_KEY, v); } catch(e){}
   $("apiSecret").value = ""; m.className = "sf-msg ok"; m.textContent = "Sleutel opgeslagen op dit toestel ✓";
 });
+$("dedupeBtn").addEventListener("click", async () => {
+  const m = $("dedupeMsg"); m.className = "sf-msg"; m.textContent = "Bezig…";
+  try {
+    const j = await apiCall({ action: "dedupe" });
+    if (j.merged === undefined){ throw new Error("Het script is nog niet bijgewerkt naar de nieuwste versie."); }
+    savePending([]);
+    m.className = "sf-msg ok"; m.textContent = j.merged + " dubbele rij(en) samengevoegd ✓ Tik daarna op Vernieuwen.";
+    fetchData(false);
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+});
 $("apiTestBtn").addEventListener("click", async () => {
   const m = $("apiMsg"); m.className = "sf-msg"; m.textContent = "Testen…";
   try {
     const r = await fetch(API_URL, { cache: "no-store" }); const j = await r.json();
     m.className = "sf-msg " + (j.ok ? "ok" : "err");
-    m.textContent = j.ok ? "Verbonden ✓ " + (j.message || "") + (localStorage.getItem(API_SECRET_KEY) ? "" : " (sleutel nog niet ingesteld)") : (j.error || "Fout");
+    m.textContent = j.ok ? "Verbonden ✓ " + (j.message || "") + (j.versie ? " (versie " + j.versie + ")" : " (OUDE versie van het script!)") + (localStorage.getItem(API_SECRET_KEY) ? "" : " (sleutel nog niet ingesteld)") : (j.error || "Fout");
   } catch(e){ m.className = "sf-msg err"; m.textContent = "Geen verbinding met het script."; }
 });
 
