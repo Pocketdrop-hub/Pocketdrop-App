@@ -448,7 +448,7 @@
   <div class="search-row">
     <div class="search-box">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#10181C" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="#10181C" stroke-width="2" stroke-linecap="round"/></svg>
-      <input id="searchInput" type="text" placeholder="Zoek een kaart…" autocomplete="off">
+      <input id="searchInput" type="text" placeholder="Zoek op naam of nummer…" autocomplete="off">
     </div>
     <select id="sortSelect">
       <option value="number" selected>Nummering</option>
@@ -1008,12 +1008,18 @@ function numberSortValue(numStr){
   return [n, String(numStr)];
 }
 
+function cardMatches(c, q){
+  if (!q) return true;
+  const hay = (c.name + " " + c.set + " " + (c.number || "")).toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+
 function filteredSorted(){
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   const sort = document.getElementById("sortSelect").value;
   let list = allCards.filter(c => {
     const matchSet = activeSet === "Alle" || c.set === activeSet;
-    const matchQuery = !q || c.name.toLowerCase().includes(q) || c.set.toLowerCase().includes(q);
+    const matchQuery = cardMatches(c, q);
     return matchSet && matchQuery;
   });
   list.sort((a,b) => {
@@ -1914,7 +1920,7 @@ document.getElementById("editSearchInput").addEventListener("input", (e) => {
   const results = document.getElementById("editSearchResults");
   if (!q){ results.innerHTML = ""; return; }
   const matches = allCards
-    .filter(c => c.name.toLowerCase().includes(q) || c.set.toLowerCase().includes(q))
+    .filter(c => cardMatches(c, q))
     .slice(0, 8);
   if (!matches.length){
     results.innerHTML = `<div class="manual-empty">Geen kaarten gevonden.</div>`;
