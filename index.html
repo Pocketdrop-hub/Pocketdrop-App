@@ -1554,7 +1554,7 @@ function printLabels(cards){
   cards = cards.filter(c => !c.manual);
   if (!cards.length){ toast("Geen kaarten om te printen."); return; }
   $("printSheet").innerHTML = cards.map(c =>
-    `<div class="lbl">${QR.svg(cardUrl(c))}<div class="l-name">${escapeHTML(c.name)}</div><div class="l-sub">${escapeHTML(c.set)} · ${escapeHTML(c.number || "")}</div><div class="l-price">${fmtPrice(c.vkp)}</div></div>`
+    `<div class="lbl">${QR.svg(cardUrl(c))}<div class="l-name">${escapeHTML(c.name)}</div><div class="l-sub">${escapeHTML(c.set)} · ${escapeHTML(c.number || "")}</div></div>`
   ).join("");
   document.body.classList.add("printing");
   setTimeout(() => window.print(), 150);
