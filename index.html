@@ -483,7 +483,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v16</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v17</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -594,12 +594,12 @@
         <hr class="admin-divider">
         <div class="admin-section-title">Handmatig toegevoegde kaarten</div>
         <div class="manual-list" id="manualList"></div>
-        <div class="admin-note">Handmatig toegevoegde kaarten worden enkel lokaal op dit toestel bewaard — ze staan niet in het Google-document en verschijnen dus niet automatisch op andere tablets. Voeg de kaart daar ook toe als je ze overal wil tonen.</div>
+        <div class="admin-note">Dit zijn oudere kaarten die enkel op dit toestel staan. Nieuwe kaarten die je hierboven toevoegt, gaan rechtstreeks naar de Google Sheet en verschijnen op alle toestellen.</div>
 
         <hr class="admin-divider">
         <div class="admin-section-title">Aangepaste kaarten</div>
         <div class="manual-list" id="editedList"></div>
-        <div class="admin-note">Aanpassingen aan kaarten uit het Google-document blijven enkel lokaal op dit toestel behouden — pas de sheet zelf ook aan als je een wijziging overal wil tonen.</div>
+        <div class="admin-note">Oude lokale aanpassingen op dit toestel. Nieuwe aanpassingen worden direct in de Google Sheet opgeslagen. Gebruik "Herstel origineel" om een oude lokale aanpassing te verwijderen.</div>
 
         <hr class="admin-divider">
         <div class="admin-section-title">Foto handmatig instellen</div>
@@ -1812,7 +1812,7 @@ function resetManualForm(){
 
 document.getElementById("cancelEditBtn").addEventListener("click", resetManualForm);
 
-document.getElementById("manualForm").addEventListener("submit", (e) => {
+document.getElementById("manualForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const editId = document.getElementById("mEditId").value;
   const overrideKeyVal = document.getElementById("mOverrideKey").value;
@@ -1826,18 +1826,46 @@ document.getElementById("manualForm").addEventListener("submit", (e) => {
   };
   if (!fields.name){ return; }
 
+  const submitBtn = document.getElementById("manualSubmitBtn");
   if (overrideKeyVal){
-    // Editing a card that comes from the Google Sheet: save as a local patch
-    // that gets re-applied on top of that sheet row every time it refreshes.
-    const entry = { matchKey: overrideKeyVal, ...fields };
-    const idx = cardOverrides.findIndex(o => o.matchKey === overrideKeyVal);
-    if (idx > -1) cardOverrides[idx] = entry; else cardOverrides.push(entry);
-    saveCardOverrides();
-    combine();
-    renderApp();
-    renderEditedList();
-    renderSetList();
-    resetManualForm();
+    // Kaart uit de Google Sheet: rechtstreeks in de sheet aanpassen.
+    const orig = allCards.find(c => !c.manual && cacheKey(c.name, c.set, c.number) === overrideKeyVal);
+    if (!orig){ toast("Kaart niet meer gevonden. Vernieuw de app en probeer opnieuw."); return; }
+    submitBtn.disabled = true;
+    try {
+      const payload = Object.assign({ action: "update", set: fields.set, number: fields.number, name: fields.name }, matchOf(orig));
+      if (fields.qty !== null) payload.qty = fields.qty;
+      if (fields.vkp !== null) payload.vkp = fields.vkp;
+      const j = await apiCall(payload);
+      cardOverrides = cardOverrides.filter(o => o.matchKey !== overrideKeyVal);
+      saveCardOverrides();
+      afterWrite(orig, j, fields);
+      renderEditedList();
+      renderSetList();
+      resetManualForm();
+      toast("Opgeslagen in de Google Sheet ✓");
+    } catch(err){
+      toast("Niet opgeslagen in de sheet: " + (err.message || err));
+    }
+    submitBtn.disabled = false;
+    return;
+  }
+
+  if (!editId){
+    // Nieuwe kaart: rechtstreeks aan de sheet toevoegen.
+    submitBtn.disabled = true;
+    try {
+      const payload = { action: "add", set: fields.set, number: fields.number, name: fields.name, qty: fields.qty && fields.qty > 0 ? fields.qty : 1 };
+      if (fields.vkp !== null) payload.vkp = fields.vkp;
+      const j = await apiCall(payload);
+      afterWrite({ set: fields.set, number: fields.number, name: fields.name }, j, fields);
+      renderSetList();
+      resetManualForm();
+      toast((j.action === "added" ? "Nieuwe kaart toegevoegd" : "Kaart bestond al, aantal opgehoogd") + " in de Google Sheet ✓");
+    } catch(err){
+      toast("Niet toegevoegd aan de sheet: " + (err.message || err));
+    }
+    submitBtn.disabled = false;
     return;
   }
 
