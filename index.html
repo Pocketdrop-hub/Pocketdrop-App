@@ -625,6 +625,24 @@
         <div class="admin-note">Gebruik dit om zelf een foto te koppelen aan een kaart waarvoor de automatische opzoeking (TCGdex) geen afbeelding kan vinden — bv. bepaalde zeldzame promo's. Vul een link in óf upload rechtstreeks een foto. Ook dit blijft lokaal op dit toestel.</div>
 
         <hr class="admin-divider">
+        <div class="admin-section-title">Set-logo handmatig instellen</div>
+        <form id="setLogoForm">
+          <div class="field"><label>Set</label><input id="slSet" list="setList" required placeholder="Zoals in de app, bv. Temporal Forces"></div>
+          <div class="field"><label>Logo URL</label><input id="slUrl" type="url" placeholder="https://…"></div>
+          <div class="field">
+            <label>Of upload een logo vanaf dit toestel</label>
+            <input id="slFile" type="file" accept="image/*">
+          </div>
+          <div id="slPreviewWrap" style="display:none; margin-bottom:12px;">
+            <img id="slPreview" style="max-width:160px; max-height:100px; border-radius:8px; border:1.5px solid var(--card-line); display:block; background:var(--cream-alt);">
+            <button type="button" id="slPreviewClear" class="btn-danger-sm" style="margin-top:6px;">Upload wissen</button>
+          </div>
+          <div class="field"><label>Uitgavedatum (optioneel, jjjj-mm-dd, bepaalt de volgorde)</label><input id="slDate" placeholder="2026-03-27"></div>
+          <button type="submit" class="btn btn-primary">Logo instellen</button>
+        </form>
+        <div class="manual-list" id="setLogoList" style="margin-top:12px;"></div>
+
+        <hr class="admin-divider">
         <div class="admin-section-title">Aankoop van klant registreren</div>
         <form id="purchaseForm">
           <div class="field-row">
@@ -788,7 +806,9 @@ const PIN_KEY = "pocketdrop_admin_pin_v1";
 const DEFAULT_PIN = "1234";
 const TCGDEX_API = "https://api.tcgdex.net/v2/en/cards";
 const TCGDEX_SETS_API = "https://api.tcgdex.net/v2/en/sets";
-const SET_LOGO_CACHE_KEY = "pocketdrop_setlogocache_v4";
+const SET_LOGO_CACHE_KEY = "pocketdrop_setlogocache_v5";
+const SET_LOGO_OVERRIDE_KEY = "pocketdrop_set_logo_overrides_v1";
+const SET_LOGO_TAG = "[SET-LOGO]";
 const IMAGE_OVERRIDE_KEY = "pocketdrop_image_overrides_v1";
 const CARD_OVERRIDE_KEY = "pocketdrop_card_overrides_v1";
 
@@ -805,6 +825,8 @@ let imgCache = {};
 try { imgCache = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}"); } catch(e){ imgCache = {}; }
 let setLogoCache = {};
 try { setLogoCache = JSON.parse(localStorage.getItem(SET_LOGO_CACHE_KEY) || "{}"); } catch(e){ setLogoCache = {}; }
+let setLogoOverrides = [];
+try { setLogoOverrides = JSON.parse(localStorage.getItem(SET_LOGO_OVERRIDE_KEY) || "[]"); } catch(e){ setLogoOverrides = []; }
 let imageOverrides = [];
 try { imageOverrides = JSON.parse(localStorage.getItem(IMAGE_OVERRIDE_KEY) || "[]"); } catch(e){ imageOverrides = []; }
 let cardOverrides = [];
@@ -1084,7 +1106,7 @@ async function renderHome(){
   const metas = await Promise.all(sets.map(s => resolveSetMeta(s.set)));
   if (myToken !== homeRenderToken) return; // a newer renderHome() call superseded this one
 
-  const ordered = sets.map((s, i) => ({ ...s, logo: metas[i].logo, releaseDate: metas[i].releaseDate }));
+  const ordered = sets.map((s, i) => ({ ...s, logo: metas[i].logoFull || (metas[i].logo ? metas[i].logo + ".png" : null), releaseDate: metas[i].releaseDate }));
   ordered.sort((a, b) => {
     if (!a.releaseDate && !b.releaseDate) return a.set.localeCompare(b.set);
     if (!a.releaseDate) return 1;
@@ -1099,7 +1121,7 @@ async function renderHome(){
     tile.innerHTML = `
       <div class="logo-wrap">
         <span class="logo-fallback">${escapeHTML(set)}</span>
-        ${logo ? `<img src="${logo}.png" alt="${escapeHTML(set)}">` : ``}
+        ${logo ? `<img src="${logo}" alt="${escapeHTML(set)}">` : ``}
       </div>
       <div class="set-info">
         <div class="set-name">${escapeHTML(set)}</div>
@@ -1314,9 +1336,20 @@ function saveSetLogoCache(){
   }, 500);
 }
 
+function findSetLogoOverride(setName){
+  const k = normKeyPart(setName);
+  return setLogoOverrides.find(o => normKeyPart(o.set) === k) || null;
+}
 async function resolveSetMeta(setName){
+  const base = await resolveSetMetaApi(setName);
+  const ov = findSetLogoOverride(setName);
+  if (!ov) return base;
+  return { logo: base.logo, logoFull: ov.url, releaseDate: ov.releaseDate || base.releaseDate };
+}
+async function resolveSetMetaApi(setName){
   const key = setName.toLowerCase();
-  if (key in setLogoCache) return setLogoCache[key];
+  const cachedMeta = setLogoCache[key];
+  if (cachedMeta && (cachedMeta.logo || (cachedMeta.at && Date.now() - cachedMeta.at < 6 * 3600 * 1000))) return cachedMeta;
   try {
     // Step 1: search by name to find the matching set's id + logo.
     const params = new URLSearchParams();
@@ -1343,14 +1376,14 @@ async function resolveSetMeta(setName){
       }
     } catch(e2){ /* keep releaseDate null, logo still usable */ }
 
-    const meta = { logo: best.logo || null, releaseDate };
+    const meta = { logo: best.logo || null, releaseDate, at: Date.now() };
     setLogoCache[key] = meta;
     saveSetLogoCache();
     return meta;
   } catch(e){
-    const meta = { logo: null, releaseDate: null };
-    setLogoCache[key] = meta;
-    saveSetLogoCache();
+    const noMatch = e && /no matching set/.test(e.message || "");
+    const meta = { logo: null, releaseDate: null, at: Date.now() };
+    if (noMatch){ setLogoCache[key] = meta; saveSetLogoCache(); }
     return meta;
   }
 }
@@ -1725,6 +1758,7 @@ function showAdminContent(){
   renderOverrideList();
   renderEditedList();
   renderQrSetSelect();
+  renderSetLogoList();
 }
 
 document.getElementById("adminBtn").addEventListener("click", openAdmin);
@@ -1963,7 +1997,7 @@ function overrideKey(o){
   return cacheKey(o.name, o.set, o.number);
 }
 
-function resizeImageFile(file, maxDim, quality){
+function resizeImageFile(file, maxDim, quality, asPng){
   maxDim = maxDim || 600;
   quality = quality || 0.85;
   return new Promise((resolve, reject) => {
@@ -1980,12 +2014,11 @@ function resizeImageFile(file, maxDim, quality){
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, width, height);
+        if (!asPng){ ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, width, height); }
         ctx.drawImage(img, 0, 0, width, height);
-        const out = canvas.toDataURL("image/jpeg", quality);
+        const out = asPng ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", quality);
         URL.revokeObjectURL(objUrl);
-        if (!out || out.length < 100 || out.indexOf("data:image/jpeg") !== 0) reject(new Error("Kon afbeelding niet omzetten"));
+        if (!out || out.length < 100 || out.indexOf("data:image/") !== 0) reject(new Error("Kon afbeelding niet omzetten"));
         else resolve(out);
       } catch(err){ URL.revokeObjectURL(objUrl); reject(err); }
     };
@@ -2012,14 +2045,25 @@ async function fetchPhotos(){
     const r = await fetch(API_URL + "?action=photos", { cache: "no-store" });
     const j = await r.json();
     if (!j.ok || !Array.isArray(j.photos)) return;
-    const remote = j.photos.map(p => ({ id: "r" + nkey(p.name, p.set, p.number), set: p.set, number: p.number, name: p.name, url: p.url, remote: true }));
-    const before = photoSig(imageOverrides.filter(o => o.remote));
-    if (before === photoSig(remote)) return;
-    imageOverrides = imageOverrides.filter(o => !o.remote).concat(remote);
-    saveImageOverrides();
-    remote.forEach(p => { delete imgCache[overrideKey(p)]; });
-    renderOverrideList();
-    renderApp();
+    const isLogo = p => p.name === SET_LOGO_TAG;
+    const remote = j.photos.filter(p => !isLogo(p)).map(p => ({ id: "r" + nkey(p.name, p.set, p.number), set: p.set, number: p.number, name: p.name, url: p.url, remote: true }));
+    const remoteLogos = j.photos.filter(isLogo).map(p => ({ set: p.set, releaseDate: p.number || "", url: p.url, remote: true }));
+    let changed = false;
+    if (photoSig(imageOverrides.filter(o => o.remote)) !== photoSig(remote)){
+      imageOverrides = imageOverrides.filter(o => !o.remote).concat(remote);
+      saveImageOverrides();
+      remote.forEach(p => { delete imgCache[overrideKey(p)]; });
+      renderOverrideList();
+      changed = true;
+    }
+    const sigL = l => JSON.stringify(l.map(o => [o.set, o.releaseDate || "", o.url.length, o.url.slice(-20)]));
+    if (sigL(setLogoOverrides.filter(o => o.remote)) !== sigL(remoteLogos)){
+      setLogoOverrides = setLogoOverrides.filter(o => !o.remote).concat(remoteLogos);
+      saveSetLogoOverrides();
+      renderSetLogoList();
+      changed = true;
+    }
+    if (changed) renderApp();
   } catch(e){}
 }
 
@@ -2059,6 +2103,94 @@ function findOverride(key){
 function saveImageOverrides(){
   try { localStorage.setItem(IMAGE_OVERRIDE_KEY, JSON.stringify(imageOverrides)); } catch(e){}
 }
+function saveSetLogoOverrides(){
+  try { localStorage.setItem(SET_LOGO_OVERRIDE_KEY, JSON.stringify(setLogoOverrides)); } catch(e){}
+}
+let pendingLogoDataUrl = null;
+async function resizeLogoFile(file){
+  const steps = [[420,true],[320,true],[240,true],[420,false],[300,false],[220,false]];
+  let url = "";
+  for (const st of steps){
+    url = await resizeImageFile(file, st[0], 0.8, st[1]);
+    if (url.length <= 45000) break;
+  }
+  return url;
+}
+document.getElementById("slFile").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  toast("Logo verwerken…");
+  try {
+    pendingLogoDataUrl = await resizeLogoFile(file);
+    document.getElementById("slPreview").src = pendingLogoDataUrl;
+    document.getElementById("slPreviewWrap").style.display = "";
+    document.getElementById("slUrl").value = "";
+  } catch(err){
+    toast("Logo verwerken mislukt: " + ((err && err.message) || err));
+    document.getElementById("slFile").value = "";
+  }
+});
+document.getElementById("slPreviewClear").addEventListener("click", () => {
+  pendingLogoDataUrl = null;
+  document.getElementById("slFile").value = "";
+  document.getElementById("slPreviewWrap").style.display = "none";
+});
+function resetSetLogoForm(){
+  document.getElementById("setLogoForm").reset();
+  pendingLogoDataUrl = null;
+  document.getElementById("slPreviewWrap").style.display = "none";
+}
+document.getElementById("setLogoForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const set = document.getElementById("slSet").value.trim();
+  const url = pendingLogoDataUrl || document.getElementById("slUrl").value.trim();
+  const releaseDate = document.getElementById("slDate").value.trim();
+  if (!set || !url) return;
+  const entry = { set, url, releaseDate, remote: false };
+  const prev = setLogoOverrides.find(o => normKeyPart(o.set) === normKeyPart(set));
+  setLogoOverrides = setLogoOverrides.filter(o => normKeyPart(o.set) !== normKeyPart(set));
+  setLogoOverrides.push(entry);
+  saveSetLogoOverrides();
+  resetSetLogoForm();
+  renderSetLogoList();
+  renderApp();
+  try {
+    if (prev && prev.remote && (prev.releaseDate || "") !== releaseDate) await apiCall({ action: "delphoto", set: prev.set, number: prev.releaseDate || "", name: SET_LOGO_TAG });
+    await apiCall({ action: "setphoto", set, number: releaseDate, name: SET_LOGO_TAG, url });
+    entry.remote = true; saveSetLogoOverrides(); renderSetLogoList();
+    toast("Set-logo gedeeld met alle toestellen ✓");
+  } catch(err){
+    toast("Set-logo enkel op dit toestel bewaard: " + (err.message || err));
+  }
+});
+function renderSetLogoList(){
+  const list = document.getElementById("setLogoList");
+  if (!list) return;
+  if (!setLogoOverrides.length){ list.innerHTML = `<div class="manual-empty">Nog geen set-logo's handmatig ingesteld.</div>`; return; }
+  list.innerHTML = "";
+  setLogoOverrides.slice().reverse().forEach(entry => {
+    const row = document.createElement("div");
+    row.className = "manual-row";
+    row.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${entry.url}" alt="" style="width:56px; height:36px; object-fit:contain; border-radius:4px; border:1px solid var(--card-line); flex:none; background:var(--cream-alt);">
+        <div><div class="mr-name">${escapeHTML(entry.set)}</div><div class="mr-sub">${entry.releaseDate ? escapeHTML(entry.releaseDate) : "automatische datum"}${entry.remote ? " · gedeeld" : " · enkel dit toestel"}</div></div>
+      </div>
+      <div class="mr-actions"><button class="btn-danger-sm" data-action="delete">Verwijderen</button></div>`;
+    row.querySelector('[data-action="delete"]').addEventListener("click", () => {
+      if (!confirm(`Set-logo voor "${entry.set}" verwijderen?`)) return;
+      setLogoOverrides = setLogoOverrides.filter(o => o !== entry);
+      saveSetLogoOverrides(); renderSetLogoList(); renderApp();
+      if (entry.remote){
+        apiCall({ action: "delphoto", set: entry.set, number: entry.releaseDate || "", name: SET_LOGO_TAG })
+          .then(() => toast("Set-logo verwijderd op alle toestellen ✓"))
+          .catch(e => toast("Enkel op dit toestel verwijderd: " + (e.message || e)));
+      }
+    });
+    list.appendChild(row);
+  });
+}
+
 async function syncPhoto(entry, oldRemote){
   try {
     if (oldRemote && nkey(oldRemote.name, oldRemote.set, oldRemote.number) !== nkey(entry.name, entry.set, entry.number)){
