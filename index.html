@@ -1190,7 +1190,7 @@ function onTileVisible(entries){
       decodeURIComponent(img.dataset.number)
     ).then(baseUrl => {
       if (baseUrl){
-        img.src = baseUrl + "/low.webp";
+        img.src = imgSrc(baseUrl, "low");
         img.onload = () => img.classList.add("loaded");
       }
     });
@@ -1357,6 +1357,11 @@ async function resolveSetMeta(setName){
 /* ==========================================================
    MODAL
    ========================================================== */
+function imgSrc(base, size){
+  if (/^data:/i.test(base) || /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(base)) return base;
+  return base + "/" + size + ".webp";
+}
+
 function openModal(card){
   modalCard = card;
   document.getElementById("modalSet").textContent = card.set;
@@ -1372,7 +1377,7 @@ function openModal(card){
   const imgWrap = document.getElementById("modalImg");
   imgWrap.innerHTML = placeholderSVG;
   resolveImage(card.name, card.set, card.number).then(baseUrl => {
-    if (baseUrl) imgWrap.innerHTML = `<img src="${baseUrl}/high.webp" alt="${escapeHTML(card.name)}">`;
+    if (baseUrl) imgWrap.innerHTML = `<img src="${imgSrc(baseUrl, 'high')}" alt="${escapeHTML(card.name)}">`;
   });
 
   document.getElementById("modalBackdrop").classList.add("show");
@@ -1584,7 +1589,7 @@ function stopScan(){
 }
 async function openScanner(){
   if (!("BarcodeDetector" in window) || !navigator.mediaDevices){
-    toast("Scannen in de app wordt hier niet ondersteund. Gebruik de camera-app van de tablet.");
+    toast("Scannen in de app werkt niet op dit toestel (iPhone/Safari). Open de gewone Camera-app, richt op de QR-code en tik op de link die verschijnt.");
     return;
   }
   try {
