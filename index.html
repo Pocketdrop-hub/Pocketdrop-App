@@ -483,7 +483,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v15</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v16</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -986,15 +986,18 @@ async function fetchData(isBackground){
 /* ==========================================================
    RENDER
    ========================================================== */
-function uniqueSets(){
-  const s = new Set(allCards.map(c => c.set));
+function inStock(c){ return !(typeof c.qty === "number" && c.qty <= 0); }
+function shopCards(){ return allCards.filter(inStock); }
+
+function uniqueSets(shopOnly){
+  const s = new Set((shopOnly ? shopCards() : allCards).map(c => c.set));
   return ["Alle", ...Array.from(s).sort()];
 }
 
 function renderChips(){
   const row = document.getElementById("chipRow");
   row.innerHTML = "";
-  uniqueSets().forEach(set => {
+  uniqueSets(true).forEach(set => {
     const chip = document.createElement("div");
     chip.className = "chip" + (set === activeSet ? " active" : "");
     chip.textContent = set;
@@ -1019,7 +1022,7 @@ function cardMatches(c, q){
 function filteredSorted(){
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   const sort = document.getElementById("sortSelect").value;
-  let list = allCards.filter(c => {
+  let list = shopCards().filter(c => {
     const matchSet = q || activeSet === "Alle" || c.set === activeSet;
     const matchQuery = cardMatches(c, q);
     return matchSet && matchQuery;
@@ -1080,7 +1083,7 @@ function renderApp(){
 
 function setsSummary(){
   const map = new Map();
-  allCards.forEach(c => {
+  shopCards().forEach(c => {
     if (!map.has(c.set)) map.set(c.set, { count: 0, totalQty: 0 });
     const entry = map.get(c.set);
     entry.count += 1;
