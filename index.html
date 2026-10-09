@@ -2015,7 +2015,17 @@ document.getElementById("oPreviewClear").addEventListener("click", () => {
 });
 
 function findOverride(key){
-  return imageOverrides.find(o => overrideKey(o) === key) || null;
+  const exact = imageOverrides.find(o => overrideKey(o) === key);
+  if (exact) return exact;
+  const parts = key.split("|");
+  const kSet = normKeyPart(parts[0]), kNum = normKeyPart(parts[1]), kName = normKeyPart(parts.slice(2).join("|"));
+  return imageOverrides.find(o => {
+    const n = normKeyPart(o.name), num = normKeyPart(o.number), st = normKeyPart(o.set);
+    if (n !== kName) return false;
+    if (num && kNum && num !== kNum) return false;
+    if (st && kSet && st !== kSet && num === "") return false;
+    return true;
+  }) || null;
 }
 function saveImageOverrides(){
   try { localStorage.setItem(IMAGE_OVERRIDE_KEY, JSON.stringify(imageOverrides)); } catch(e){}
@@ -2052,8 +2062,10 @@ document.getElementById("overrideForm").addEventListener("submit", (e) => {
   delete imgCache[overrideKey(entry)];
   saveImgCache();
   renderOverrideList();
+  const hits = allCards.filter(c => findOverride(cacheKey(c.name, c.set, c.number)) === entry).length;
   resetOverrideForm();
   if (currentView === "browse") render();
+  toast(hits ? "Foto gekoppeld aan " + hits + " kaart(en) ✓" : "Foto opgeslagen, maar er is geen kaart met deze naam en dit nummer gevonden. Controleer de spelling.");
 });
 
 function renderOverrideList(){
