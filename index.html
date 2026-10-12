@@ -510,7 +510,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v32</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v33</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -531,12 +531,6 @@
         <div class="detail-cell" id="modalLowestWrap"><div class="label">Cardmarket richtprijs</div><div class="value" id="modalLowest"></div></div>
         <div class="detail-cell"><div class="label">Set</div><div class="value" id="modalSet2"></div></div>
         <div class="detail-cell"><div class="label">Conditie</div><div class="value" id="modalCond"></div></div>
-      </div>
-      <div class="staff-box" id="staffLock" style="display:none;">
-        <h4>Personeel</h4>
-        <div class="field-row"><div class="field"><input id="sfPin" type="password" inputmode="numeric" placeholder="Personeelscode" autocomplete="off"></div></div>
-        <button class="btn btn-ghost" id="sfPinBtn" type="button" style="width:100%;">Ontgrendel</button>
-        <div class="sf-msg err" id="sfPinMsg"></div>
       </div>
       <div class="staff-box" id="staffPanel" style="display:none;">
         <h4>Personeel · beheer deze kaart</h4>
@@ -752,6 +746,10 @@
         
         </div>
         <div class="atab" data-tab="instellingen">
+        <div class="admin-section-title">Personeel</div>
+        <button type="button" class="btn btn-ghost" id="staffLogout" style="width:100%;">Personeel uitloggen op dit toestel</button>
+        <div class="admin-note">Na uitloggen zien klanten niets van het personeelsgedeelte. Inloggen kan enkel via Beheer (tandwiel).</div>
+        <hr class="admin-divider">
         <div class="admin-section-title">Koppeling met de sheet</div>
         <div class="field"><label>Sleutel (eenmalig per toestel)</label><input id="apiSecret" type="password" autocomplete="off" placeholder="Geheime sleutel van het script"></div>
         <div class="btn-row">
@@ -837,7 +835,6 @@
         <button class="btn btn-primary" id="itSave" type="button" style="width:100%;">Opslaan in sheet</button>
         <div class="sf-msg" id="itMsg"></div>
       </div>
-      <div class="admin-note" id="itemLockNote" style="display:none;">Personeel: ontgrendel eerst via Beheer (tandwiel) om dit item aan te passen.</div>
     </div>
   </div>
 </div>
@@ -1753,7 +1750,6 @@ function afterWrite(oldCard, j, fields){
 function sfMsg(text, ok){ const m = $("sfMsg"); m.textContent = text; m.className = "sf-msg " + (ok ? "ok" : "err"); }
 function renderStaffPanel(){
   const c = modalCard;
-  $("staffLock").style.display = (!adminUnlocked && c) ? "" : "none";
   $("staffPanel").style.display = (adminUnlocked && c) ? "" : "none";
   if (!adminUnlocked || !c) return;
   $("staffManualNote").style.display = c.manual ? "" : "none";
@@ -1781,13 +1777,6 @@ function reopen(nc, msg){
 function curFields(){ return { set: $("sfSet").value.trim(), number: $("sfNumber").value.trim(), name: $("sfName").value.trim(), cond: $("sfCond").value }; }
 function matchOf(c){ const o = c.orig || c; return { matchSet: o.set, matchNumber: o.number, matchName: o.name }; }
 
-$("sfPinBtn").addEventListener("click", () => {
-  if ($("sfPin").value.trim() === getPin()){
-    adminUnlocked = true; updateScanBtn(); try{updateCartFab();}catch(e){} try { sessionStorage.setItem(STAFF_KEY, "1"); } catch(e){}
-    $("sfPin").value = ""; $("sfPinMsg").textContent = ""; renderStaffPanel();
-  } else { $("sfPinMsg").textContent = "Onjuiste code."; }
-});
-$("sfPin").addEventListener("keydown", (e) => { if (e.key === "Enter") $("sfPinBtn").click(); });
 $("sfSell").addEventListener("click", () => staffRun("sfSell", async () => {
   const c = modalCard; const j = await apiCall(Object.assign({ action: "adjust", delta: -1 }, matchOf(c)));
   reopen(afterWrite(c, j, { set: c.set, number: c.number, name: c.name }), "Verkocht ✓ Nieuw aantal: " + j.qty);
@@ -2082,7 +2071,6 @@ function openItem(name, item){
   img.onload = () => { wrap.innerHTML = ""; img.style.display = ""; wrap.appendChild(img); };
   loadItemImage(name, item, img, "high");
   $("itemStaff").style.display = adminUnlocked ? "" : "none";
-  $("itemLockNote").style.display = adminUnlocked ? "none" : "";
   $("itQty").value = q === null ? "" : q;
   $("itPrice").value = itemPrice(item) === null ? "" : String(itemPrice(item)).replace(".", ",");
   $("itMsg").textContent = "";
@@ -2164,7 +2152,7 @@ $("setupBtn").addEventListener("click", async () => {
 
 
 /* ---- kaart scannen (gratis, OCR op het toestel met Tesseract.js) ---- */
-function updateScanBtn(){ $("scanAiBtn").style.display = adminUnlocked || haveSecret() ? "" : "none"; }
+function updateScanBtn(){ $("scanAiBtn").style.display = adminUnlocked ? "" : "none"; }
 function haveSecret(){ try { return !!localStorage.getItem(API_SECRET_KEY); } catch(e){ return false; } }
 const TESS_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
 let tessPromise = null, tessWorker = null;
@@ -2501,6 +2489,15 @@ function updatePurchasePreview(){
 ["pSet", "pNumber", "pName"].forEach(id => $(id).addEventListener("input", () => { clearTimeout(pPrevTimer); pPrevTimer = setTimeout(updatePurchasePreview, 600); }));
 $("purchaseForm").addEventListener("submit", () => { setTimeout(() => { if (!$("pName").value.trim()) $("pPreview").style.display = "none"; }, 1500); });
 
+
+$("staffLogout").addEventListener("click", () => {
+  adminUnlocked = false;
+  try { sessionStorage.removeItem(STAFF_KEY); } catch(e){}
+  updateScanBtn(); try { updateCartFab(); } catch(e){}
+  $("adminBackdrop").classList.remove("show");
+  document.getElementById("pinGate").style.display = ""; document.getElementById("adminContent").style.display = "none";
+  toast("Uitgelogd.");
+});
 /* ==========================================================
    EVENTS + INIT
    ========================================================== */
