@@ -510,7 +510,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v34</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v35</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -828,7 +828,7 @@
           <button class="btn btn-ghost" id="itRestock" type="button">Bijvullen (+1)</button>
         </div>
         <button class="btn btn-yellow" id="itCart" type="button" style="width:100%;margin-top:8px;">🛒 In mandje</button>
-        <button class="btn btn-ghost" id="itEbay" type="button" style="width:100%;margin-top:8px;display:none;">🔎 Laatst verkocht op eBay</button>
+        <button class="btn btn-ghost" id="itEbay" type="button" style="width:100%;margin-top:8px;display:none;">🔎 Laatst verkocht (eBay-verkopen)</button>
         <div class="field-row" style="margin-top:12px;">
           <div class="field"><label>Aantal</label><input id="itQty" type="number" min="0" step="1"></div>
           <div class="field"><label>Verkoopprijs (€)</label><input id="itPrice" type="text" inputmode="decimal"></div>
@@ -2505,7 +2505,14 @@ $("itEbay").addEventListener("click", () => {
   if (!activeItem || activeItem.name !== "Slabs") return;
   const it = activeItem.item;
   const q = [it.card, it.set, it.number, it.grading, it.grade].map(x => String(x || "").trim()).filter(Boolean).join(" ");
-  window.open("https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(q) + "&LH_Sold=1&LH_Complete=1&_sop=13", "_blank", "noopener");
+  // 130point toont recente eBay-verkopen zonder dat je op eBay moet inloggen; de zoektekst wordt gekopieerd om te plakken.
+  let copied = false;
+  try { if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(q); copied = true; } } catch(e){}
+  if (!copied){
+    try { const t = document.createElement("textarea"); t.value = q; t.style.position = "fixed"; t.style.opacity = "0"; document.body.appendChild(t); t.select(); copied = document.execCommand("copy"); t.remove(); } catch(e){}
+  }
+  toast(copied ? "Zoektekst gekopieerd: plak ze in het zoekveld (" + q + ")" : "Zoek op: " + q);
+  window.open("https://130point.com/sales/", "_blank", "noopener");
 });
 /* ==========================================================
    EVENTS + INIT
