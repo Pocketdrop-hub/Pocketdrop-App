@@ -164,7 +164,7 @@
   }
   .meta-row button:active{ transform:translateY(1px); }
 
-  .era-head{ grid-column:1/-1; margin:14px 0 2px; padding:8px 14px; border-radius:12px; background:linear-gradient(90deg,var(--blue,#1E88E5),#42A5F5); color:#fff; font-family:var(--font-display); font-weight:800; font-size:17px; display:flex; justify-content:space-between; align-items:baseline; }
+  .era-head{ grid-column:1/-1; margin:14px 0 2px; padding:8px 14px; border-radius:12px; background:linear-gradient(90deg,var(--blue,#1E88E5),#42A5F5); color:#fff; font-family:'Inter',system-ui,sans-serif; font-weight:800; font-size:17px; letter-spacing:.2px; display:flex; justify-content:space-between; align-items:baseline; }
   .era-head small{ font-weight:700; font-size:12px; opacity:.9; }
   .grid{
     display:grid;
@@ -512,7 +512,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v26</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v27</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -930,7 +930,7 @@ const DATA_CACHE_KEY = "pocketdrop_data_v3";
 const IMG_CACHE_KEY = "pocketdrop_imgcache_v5";
 const MANUAL_CARDS_KEY = "pocketdrop_manual_cards_v1";
 const PIN_KEY = "pocketdrop_admin_pin_v1";
-const DEFAULT_PIN = "1234";
+const DEFAULT_PIN = "3010";
 const TCGDEX_API = "https://api.tcgdex.net/v2/en/cards";
 const TCGDEX_SETS_API = "https://api.tcgdex.net/v2/en/sets";
 const SET_LOGO_CACHE_KEY = "pocketdrop_setlogocache_v5";
@@ -1117,7 +1117,7 @@ function inStock(c){ return !(typeof c.qty === "number" && c.qty <= 0); }
 function shopCards(){ return allCards.filter(inStock); }
 
 function uniqueSets(shopOnly){
-  const s = new Set((shopOnly ? shopCards() : allCards).map(c => c.set));
+  const s = new Set((shopOnly ? shopCards() : allCards).map(c => setOf(c)));
   return ["Alle", ...Array.from(s).sort()];
 }
 
@@ -1150,7 +1150,7 @@ function filteredSorted(){
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   const sort = document.getElementById("sortSelect").value;
   let list = shopCards().filter(c => {
-    const matchSet = q || activeSet === "Alle" || c.set === activeSet;
+    const matchSet = q || activeSet === "Alle" || setOf(c) === activeSet;
     const matchQuery = cardMatches(c, q);
     return matchSet && matchQuery;
   });
@@ -1208,14 +1208,28 @@ function renderApp(){
 function setsSummary(){
   const map = new Map();
   shopCards().forEach(c => {
-    if (!map.has(c.set)) map.set(c.set, { count: 0, totalQty: 0 });
-    const entry = map.get(c.set);
+    const sn = setOf(c);
+    if (!map.has(sn)) map.set(sn, { count: 0, totalQty: 0 });
+    const entry = map.get(sn);
     entry.count += 1;
     entry.totalQty += (c.qty || 0);
   });
   return Array.from(map.entries())
     .map(([set, stats]) => ({ set, ...stats }))
     .sort((a,b) => a.set.localeCompare(b.set));
+}
+
+
+/* ---- promo's: MEP* en SVP* krijgen een eigen set in het juiste tijdperk ---- */
+const PROMO_SETS = {
+  "Mega Evolution Promos": { era: "Mega Evolution", date: "2025-09-26" },
+  "Scarlet & Violet Promos": { era: "Scarlet & Violet", date: "2023-03-31" }
+};
+function setOf(c){
+  const n = String(c.number || "").trim().toUpperCase();
+  if (n.startsWith("MEP")) return "Mega Evolution Promos";
+  if (n.startsWith("SVP")) return "Scarlet & Violet Promos";
+  return c.set;
 }
 
 /* ---- tijdperken (op releasedatum van de set) ---- */
@@ -1233,7 +1247,8 @@ const ERAS = [
   ["2002-08-01", "e-Card"],
   ["0000-00-00", "Klassiek (Base t/m Neo)"]
 ];
-function eraOf(date){
+function eraOf(date, setName){
+  if (setName && PROMO_SETS[setName]) return PROMO_SETS[setName].era;
   if (!date) return "Overige";
   const d = String(date).slice(0, 10);
   for (const [from, name] of ERAS){ if (d >= from) return name; }
@@ -1273,18 +1288,18 @@ async function renderHome(){
   grid.innerHTML = "";
   renderCollectionTiles(grid);
   if (grid.children.length){
-    const h = document.createElement("div"); h.className = "era-head"; h.innerHTML = "<span>Slabs &amp; Sealed</span>";
+    const h = document.createElement("div"); h.className = "era-head"; h.innerHTML = '<span><b style="font-weight:800;">Slabs &amp; Sealed</b></span>';
     grid.insertBefore(h, grid.firstChild);
   }
   const eraCount = {};
-  ordered.forEach(o => { const e = eraOf(o.releaseDate); eraCount[e] = (eraCount[e] || 0) + 1; });
+  ordered.forEach(o => { const e = eraOf(o.releaseDate, o.set); eraCount[e] = (eraCount[e] || 0) + 1; });
   let lastEra = null;
   ordered.forEach(({ set, count, logo, releaseDate }) => {
-    const era = eraOf(releaseDate);
+    const era = eraOf(releaseDate, set);
     if (era !== lastEra){
       lastEra = era;
       const h = document.createElement("div"); h.className = "era-head";
-      h.innerHTML = `<span>${escapeHTML(era)}</span><small>${eraCount[era]} ${eraCount[era] === 1 ? "set" : "sets"}</small>`;
+      h.innerHTML = `<span><b style="font-weight:800;">${escapeHTML(era)}</b></span><small>${eraCount[era]} ${eraCount[era] === 1 ? "set" : "sets"}</small>`;
       grid.appendChild(h);
     }
     const tile = document.createElement("div");
@@ -1514,7 +1529,7 @@ function findSetLogoOverride(setName){
   return setLogoOverrides.find(o => normKeyPart(o.set) === k) || null;
 }
 async function resolveSetMeta(setName){
-  const base = await resolveSetMetaApi(setName);
+  const base = PROMO_SETS[setName] ? { logo: null, releaseDate: PROMO_SETS[setName].date } : await resolveSetMetaApi(setName);
   const ov = findSetLogoOverride(setName);
   if (!ov) return base;
   return { logo: base.logo, logoFull: ov.url, releaseDate: ov.releaseDate || base.releaseDate };
@@ -1848,7 +1863,7 @@ $("purchaseForm").addEventListener("submit", async (e) => {
 });
 $("qrPrintBtn").addEventListener("click", () => {
   const s = $("qrSetSelect").value;
-  printLabels(allCards.filter(c => s === "Alle" || c.set === s));
+  printLabels(allCards.filter(c => s === "Alle" || setOf(c) === s));
 });
 function renderQrSetSelect(){
   const sel = $("qrSetSelect"), cur = sel.value;
