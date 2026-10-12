@@ -516,6 +516,21 @@
   .modal-img img{ width:92%; height:92%; }
 
 
+
+  /* v38: statistieken + export */
+  .st-bars{ display:flex; align-items:flex-end; gap:3px; height:110px; margin:10px 0 4px; padding:6px 4px 0; background:var(--cream-alt); border-radius:12px; overflow-x:auto; }
+  .st-bars .bar{ flex:1 0 8px; min-width:8px; max-width:34px; background:linear-gradient(180deg,#3DB4F2,#0B6BAE); border-radius:5px 5px 0 0; position:relative; }
+  .st-bars .bar.zero{ background:rgba(0,0,0,.12); }
+  .st-cap{ font-size:11.5px; color:var(--grey); display:flex; justify-content:space-between; margin-bottom:8px; }
+  .st-h{ font-weight:800; font-size:14px; margin:14px 0 4px; }
+  .export-row{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; } .export-row .btn{ flex:1 1 140px; }
+
+  .hero .hero-deco{ position:absolute; left:0; right:0; bottom:0; top:0; pointer-events:none; z-index:0; }
+  .hero .hero-deco span{ position:absolute; font-size:28px; opacity:.9; filter:drop-shadow(0 2px 3px rgba(0,0,0,.25)); left:calc(57% + var(--k)*6.5%); top:14%; transform:rotate(calc(var(--k)*17deg - 20deg)); }
+  @media (prefers-reduced-motion:no-preference){ .hero .hero-deco span{ animation:floaty 5s ease-in-out infinite; animation-delay:calc(var(--k)*-1.1s); } }
+  .hero .hero-deco span:nth-child(even){ top:62%; }
+  @keyframes floaty{ 0%,100%{ translate:0 0; } 50%{ translate:0 -7px; } }
+  @media (max-width:560px){ .hero .hero-deco span{ left:calc(6% + var(--k)*22%); top:8%; font-size:22px; } .hero .hero-deco span:nth-child(even){ top:14%; } }
 </style>
 </head>
 <body>
@@ -575,7 +590,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v37</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v38</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -658,6 +673,7 @@
         <div class="admin-tabs" id="adminTabs">
           <button type="button" data-tab="kassa" class="on">Kassa</button>
           <button type="button" data-tab="kaarten">Kaarten</button>
+          <button type="button" data-tab="cijfers">Cijfers</button>
           <button type="button" data-tab="weergave">Foto's &amp; labels</button>
           <button type="button" data-tab="instellingen">Instellingen</button>
         </div>
@@ -705,6 +721,20 @@
         <div id="dayOut"></div>
 
         
+        </div>
+        <div class="atab" data-tab="cijfers">
+        <div class="admin-section-title">Verkoopstatistieken</div>
+        <div class="field-row">
+          <div class="field"><label>Periode</label>
+            <select id="stPeriod"><option value="7">Laatste 7 dagen</option><option value="30">Laatste 30 dagen</option><option value="month">Deze maand</option><option value="year">Dit jaar</option><option value="custom">Eigen periode…</option></select></div>
+        </div>
+        <div class="field-row" id="stCustom" style="display:none;">
+          <div class="field"><label>Van</label><input id="stFrom" type="date"></div>
+          <div class="field"><label>Tot</label><input id="stTo" type="date"></div>
+        </div>
+        <button class="btn btn-primary" id="stBtn" type="button" style="width:100%;">Statistieken tonen</button>
+        <div class="sf-msg" id="stMsg"></div>
+        <div id="stOut"></div>
         </div>
         <div class="atab" data-tab="kaarten">
         <div class="admin-section-title">Bestaande kaart aanpassen</div>
@@ -2473,9 +2503,113 @@ $("dayBtn").addEventListener("click", async () => {
     const lines = (j.lines || []).slice().reverse().map(x =>
       `<div><span>${escapeHTML(x.time)} · ${x.type === "verkocht" ? "🟢" : "🔵"} ${x.qty}× ${escapeHTML(x.name || "")}</span><b>${fmtPrice(x.qty * x.price)}</b></div>`).join("");
     out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}</div>` +
-      (lines ? `<div class="day-list">${lines}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen of aankopen op deze dag.</div>`);
+      (lines ? `<div class="day-list">${lines}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen of aankopen op deze dag.</div>`) +
+      `<div class="export-row"><button class="btn btn-yellow" type="button" data-exp="csv">⬇ Download CSV</button><button class="btn btn-ghost" type="button" data-exp="copy">📋 Kopieer als tekst</button></div>`;
+    lastDay = j;
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
 });
+
+/* ---- v38: export dagoverzicht ---- */
+function csvCell(v){ v = String(v === null || v === undefined ? "" : v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function csvNum(n){ return String(Math.round((Number(n) || 0) * 100) / 100).replace(".", ","); }
+function downloadCsv(name, rows){
+  const text = "﻿" + rows.map(r => r.map(csvCell).join(";")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 800);
+}
+async function copyText(t){
+  try { await navigator.clipboard.writeText(t); return true; } catch(e){}
+  try { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); const ok = document.execCommand("copy"); ta.remove(); return ok; } catch(e){ return false; }
+}
+let lastDay = null;
+function dayExportRows(j){
+  const rows = [["Datum", "Tijd", "Type", "Set", "Kaart", "Aantal", "Prijs per stuk", "Totaal"]];
+  (j.lines || []).forEach(x => rows.push([j.date, x.time, x.type, x.set, x.name, x.qty, csvNum(x.price), csvNum(x.qty * x.price)]));
+  rows.push([]); rows.push(["Kaarten verkocht", j.sold]); rows.push(["Omzet", csvNum(j.revenue)]);
+  rows.push(["Kaarten ingekocht", j.bought]); rows.push(["Inkoop", csvNum(j.cost)]); rows.push(["Omzet min inkoop", csvNum(j.revenue - j.cost)]);
+  return rows;
+}
+function dayExportText(j){
+  const d = j.date.split("-").reverse().join("/");
+  let t = "Pocketdrop dagoverzicht " + d + "\n" + j.sold + " kaarten verkocht · omzet " + fmtPrice(j.revenue) + "\n" + j.bought + " kaarten ingekocht · inkoop " + fmtPrice(j.cost) + "\nOmzet min inkoop: " + fmtPrice(j.revenue - j.cost) + "\n";
+  (j.lines || []).forEach(x => { t += "\n" + x.time + " " + (x.type === "verkocht" ? "verkocht" : "ingekocht") + " " + x.qty + "× " + (x.name || "") + " (" + (x.set || "") + ") " + fmtPrice(x.qty * x.price); });
+  return t;
+}
+$("dayOut").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-exp]"); if (!b || !lastDay) return;
+  if (b.dataset.exp === "csv"){ downloadCsv("pocketdrop-dag-" + lastDay.date + ".csv", dayExportRows(lastDay)); return; }
+  const ok = await copyText(dayExportText(lastDay)); b.textContent = ok ? "✓ Gekopieerd" : "Kopiëren mislukt"; setTimeout(() => { b.textContent = "📋 Kopieer als tekst"; }, 2000);
+});
+
+/* ---- v38: statistieken ---- */
+function isoDay(d){ const p = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+function statsRangeFor(v){
+  const now = new Date(), to = isoDay(now);
+  if (v === "custom") return { from: $("stFrom").value || to, to: $("stTo").value || to };
+  if (v === "month") return { from: isoDay(new Date(now.getFullYear(), now.getMonth(), 1)), to };
+  if (v === "year") return { from: now.getFullYear() + "-01-01", to };
+  const f = new Date(now); f.setDate(f.getDate() - (Number(v) - 1)); return { from: isoDay(f), to };
+}
+$("stFrom").value = $("stTo").value = todayStr();
+$("stPeriod").addEventListener("change", () => { $("stCustom").style.display = $("stPeriod").value === "custom" ? "" : "none"; });
+let lastStats = null;
+$("stBtn").addEventListener("click", async () => {
+  const m = $("stMsg"), out = $("stOut"); m.className = "sf-msg"; m.textContent = "Bezig…"; out.innerHTML = "";
+  try {
+    const r = statsRangeFor($("stPeriod").value);
+    const j = await apiCall({ action: "stats", from: r.from, to: r.to }); lastStats = j; m.textContent = "";
+    const tile = (v, l) => `<div class="day-tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+    const max = Math.max(1, ...j.days.map(d => d.revenue));
+    const bars = j.days.length ? `<div class="st-bars">${j.days.map(d => `<div class="bar${d.revenue ? "" : " zero"}" style="height:${Math.max(4, Math.round(d.revenue / max * 100))}%" title="${d.date}: ${fmtPrice(d.revenue)}"></div>`).join("")}</div><div class="st-cap"><span>${j.days[0].date.split("-").reverse().join("/")}</span><span>omzet per dag</span><span>${j.days[j.days.length - 1].date.split("-").reverse().join("/")}</span></div>` : "";
+    const sets = j.sets.map(x => `<div><span>${escapeHTML(x.set)} · ${x.qty}×</span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
+    const top = j.top.map(x => `<div><span>${escapeHTML(x.name)} <small style="color:var(--grey)">${escapeHTML(x.set)}</small> · ${x.qty}×</span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
+    const avg = j.days.filter(d => d.sold).length ? j.revenue / j.days.filter(d => d.sold).length : 0;
+    out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}${tile(fmtPrice(avg), "gemiddeld per verkoopdag")}</div>` + bars +
+      (sets ? `<div class="st-h">Best verkochte sets</div><div class="day-list">${sets}</div>` : "") +
+      (top ? `<div class="st-h">Best verkochte kaarten</div><div class="day-list">${top}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen in deze periode.</div>`) +
+      `<div class="export-row"><button class="btn btn-yellow" type="button" id="stExp">⬇ Download CSV</button></div>`;
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+});
+$("stOut").addEventListener("click", (e) => {
+  if (!e.target.closest("#stExp") || !lastStats) return; const j = lastStats;
+  const rows = [["Datum", "Kaarten verkocht", "Omzet", "Kaarten ingekocht", "Inkoop"]];
+  j.days.forEach(d => rows.push([d.date, d.sold, csvNum(d.revenue), d.bought, csvNum(d.cost)]));
+  rows.push(["Totaal", j.sold, csvNum(j.revenue), j.bought, csvNum(j.cost)]);
+  rows.push([]); rows.push(["Best verkochte sets", "Aantal", "Omzet"]); j.sets.forEach(x => rows.push([x.set, x.qty, csvNum(x.revenue)]));
+  rows.push([]); rows.push(["Best verkochte kaarten", "Set", "Aantal", "Omzet"]); j.top.forEach(x => rows.push([x.name, x.set, x.qty, csvNum(x.revenue)]));
+  downloadCsv("pocketdrop-statistieken-" + j.from + "_" + j.to + ".csv", rows);
+});
+
+/* ---- v38: seizoensbanner ---- */
+const SEASON_OVERRIDE = "";   // "" = automatisch; of: standaard, halloween, kerst, valentijn
+const SEASONS = {
+  standaard:{ g:"linear-gradient(135deg,#0B6BAE 0%,#1E9BE0 55%,#5CC3F3 100%)", deco:[] },
+  valentijn:{ g:"linear-gradient(135deg,#B3124F 0%,#E8447F 55%,#FF9CC0 100%)", deco:["💖","💗","💘","💕"] },
+  lente:    { g:"linear-gradient(135deg,#1C8F6B 0%,#3DBE8B 55%,#9BE3B8 100%)", deco:["🌸","🌷","🦋","🌼"] },
+  zomer:    { g:"linear-gradient(135deg,#F08A00 0%,#FFB400 50%,#38BDF2 100%)", deco:["☀️","🌴","🍦","🌊"] },
+  herfst:   { g:"linear-gradient(135deg,#9A4A0C 0%,#E07A1F 55%,#F6B25A 100%)", deco:["🍂","🍁","🍄","🌰"] },
+  halloween:{ g:"linear-gradient(135deg,#2B1055 0%,#6A2BB5 55%,#F28A1E 100%)", deco:["🎃","🦇","👻","🕸️"] },
+  kerst:    { g:"linear-gradient(135deg,#0F4C3A 0%,#1F7A4F 50%,#B3262E 100%)", deco:["❄️","🎄","⭐","🎁"] }
+};
+function seasonNow(d){
+  const q = new URLSearchParams(location.search).get("seizoen"); if (q && SEASONS[q]) return q;
+  if (SEASON_OVERRIDE && SEASONS[SEASON_OVERRIDE]) return SEASON_OVERRIDE;
+  const m = d.getMonth() + 1, day = d.getDate(), md = m * 100 + day;
+  if (md >= 207 && md <= 214) return "valentijn";
+  if (md >= 1020 && md <= 1102) return "halloween";
+  if (md >= 1205 || md <= 106) return "kerst";
+  return "standaard";
+}
+function applySeason(){
+  const el = document.getElementById("heroBanner"); if (!el) return;
+  const key = seasonNow(new Date()), S = SEASONS[key];
+  el.dataset.season = key;
+  let deco = el.querySelector(".hero-deco");
+  if (!deco){ deco = document.createElement("div"); deco.className = "hero-deco"; deco.setAttribute("aria-hidden", "true"); el.appendChild(deco); }
+  deco.innerHTML = S.deco.map((e, i) => `<span style="--k:${i}">${e}</span>`).join("");
+}
+applySeason();
 updateCartFab();
 
 
