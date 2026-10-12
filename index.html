@@ -247,6 +247,22 @@
   .empty-state .icon{ font-size:40px; margin-bottom:10px; }
   .empty-state h3{ font-family:var(--font-display); color:var(--ink); margin:0 0 6px; }
 
+
+  .cart-fab{ position:fixed; right:16px; bottom:16px; z-index:90; border:0; border-radius:999px; padding:14px 18px; font-weight:800; font-size:15px; background:var(--yellow,#FFCB05); color:#10181C; box-shadow:0 6px 18px rgba(0,0,0,.28); cursor:pointer; display:none; }
+  .cart-fab .cnt{ background:#10181C; color:#fff; border-radius:999px; padding:2px 8px; margin-left:6px; font-size:13px; }
+  .cart-line{ display:grid; grid-template-columns:1fr auto; gap:6px 10px; padding:10px 0; border-bottom:1px solid rgba(0,0,0,.08); align-items:center; }
+  .cart-line .cl-name{ font-weight:800; font-size:14px; }
+  .cart-line .cl-sub{ font-size:12px; color:var(--grey); }
+  .cart-line .cl-ctl{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .cart-line .cl-ctl button{ width:34px; height:34px; border-radius:8px; border:0; background:var(--cream-alt); font-size:18px; font-weight:800; cursor:pointer; }
+  .cart-line .cl-ctl input{ width:80px; padding:7px; border-radius:8px; border:1px solid rgba(0,0,0,.15); font-size:14px; }
+  .cart-line .cl-err{ grid-column:1/-1; color:#b3261e; font-size:12px; font-weight:700; }
+  .cart-total{ display:flex; justify-content:space-between; font-size:18px; font-weight:800; padding:14px 0 8px; }
+  .day-tiles{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:10px 0; }
+  .day-tile{ background:var(--cream-alt); border-radius:12px; padding:10px 12px; }
+  .day-tile .v{ font-size:20px; font-weight:800; } .day-tile .l{ font-size:12px; color:var(--grey); }
+  .day-list{ font-size:13px; } .day-list div{ display:flex; justify-content:space-between; gap:8px; padding:5px 0; border-bottom:1px solid rgba(0,0,0,.06); }
+
   /* ---------- Modal ---------- */
   .modal-backdrop{
     position:fixed; inset:0; background:rgba(20,14,10,.55);
@@ -494,7 +510,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v23</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v24</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -530,6 +546,7 @@
             <button class="btn btn-primary" id="sfSell" type="button">Verkocht (−1)</button>
             <button class="btn btn-ghost" id="sfRestock" type="button">Bijvullen (+1)</button>
           </div>
+          <button class="btn btn-yellow" id="sfCart" type="button" style="width:100%;margin-top:8px;">🛒 In mandje</button>
           <div class="field-row" style="margin-top:12px;">
             <div class="field"><label>Aantal</label><input id="sfQty" type="number" min="0" step="1"></div>
             <div class="field"><label>Verkoopprijs (€)</label><input id="sfVkp" type="text" inputmode="decimal"></div>
@@ -684,6 +701,15 @@
         <div class="admin-note">Voegt in Blad1 de kolom "Conditie" toe (standaard "Near Mint"), maakt de tabbladen "Slabs" en "Sealed" aan als ze nog niet bestaan, en verwijdert de kolom "Type" uit Sealed.</div>
 
         <hr class="admin-divider">
+        <div class="admin-section-title">Dagoverzicht</div>
+        <div class="field-row">
+          <div class="field"><label>Datum</label><input id="dayDate" type="date"></div>
+        </div>
+        <button class="btn btn-primary" id="dayBtn" type="button" style="width:100%;">Overzicht tonen</button>
+        <div class="sf-msg" id="dayMsg"></div>
+        <div id="dayOut"></div>
+
+        <hr class="admin-divider">
         <div class="admin-section-title">Aankoop van klant registreren</div>
         <form id="purchaseForm">
           <button type="button" class="btn btn-yellow" id="pScanBtn" style="width:100%;margin-bottom:10px;">📷 Kaart scannen (vult set, nummer en naam in)</button>
@@ -726,6 +752,21 @@
   </div>
 </div>
 
+<button class="cart-fab" id="cartFab" type="button">🛒 Mandje<span class="cnt" id="cartCnt">0</span></button>
+<div class="modal-backdrop" id="cartBackdrop">
+  <div class="modal">
+    <button class="close-x" id="closeCart">✕</button>
+    <div class="modal-body" style="padding-top:22px;">
+      <h3 style="font-family:var(--font-display);margin:0 0 6px;">Winkelmandje</h3>
+      <div id="cartLines"></div>
+      <div class="cart-total"><span>Totaal</span><span id="cartTotal">€0,00</span></div>
+      <button class="btn btn-primary" id="cartCheckout" type="button" style="width:100%;">Verkoop afronden (alles afboeken)</button>
+      <button class="btn btn-ghost" id="cartClear" type="button" style="width:100%;margin-top:8px;">Mandje leegmaken</button>
+      <div class="sf-msg" id="cartMsg"></div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="itemBackdrop">
   <div class="modal">
     <button class="close-x" id="closeItem">✕</button>
@@ -745,6 +786,7 @@
           <button class="btn btn-primary" id="itSell" type="button">Verkocht (−1)</button>
           <button class="btn btn-ghost" id="itRestock" type="button">Bijvullen (+1)</button>
         </div>
+        <button class="btn btn-yellow" id="itCart" type="button" style="width:100%;margin-top:8px;">🛒 In mandje</button>
         <div class="field-row" style="margin-top:12px;">
           <div class="field"><label>Aantal</label><input id="itQty" type="number" min="0" step="1"></div>
           <div class="field"><label>Verkoopprijs (€)</label><input id="itPrice" type="text" inputmode="decimal"></div>
@@ -1645,7 +1687,7 @@ function matchOf(c){ const o = c.orig || c; return { matchSet: o.set, matchNumbe
 
 $("sfPinBtn").addEventListener("click", () => {
   if ($("sfPin").value.trim() === getPin()){
-    adminUnlocked = true; updateScanBtn(); try { sessionStorage.setItem(STAFF_KEY, "1"); } catch(e){}
+    adminUnlocked = true; updateScanBtn(); try{updateCartFab();}catch(e){} try { sessionStorage.setItem(STAFF_KEY, "1"); } catch(e){}
     $("sfPin").value = ""; $("sfPinMsg").textContent = ""; renderStaffPanel();
   } else { $("sfPinMsg").textContent = "Onjuiste code."; }
 });
@@ -2148,6 +2190,118 @@ $("scanAiBtn").addEventListener("click", scanAndOpen);
 $("pScanBtn").addEventListener("click", scanIntoPurchase);
 updateScanBtn();
 
+
+/* ---- winkelmandje ---- */
+const CART_KEY = "pocketdrop_cart_v1";
+let cart = [];
+try { cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]"); if (!Array.isArray(cart)) cart = []; } catch(e){ cart = []; }
+function saveCart(){ try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch(e){} updateCartFab(); }
+function updateCartFab(){
+  const n = cart.reduce((a, l) => a + l.qty, 0);
+  $("cartCnt").textContent = n;
+  $("cartFab").style.display = (adminUnlocked && n > 0) ? "block" : "none";
+}
+function cartAdd(line){
+  const ex = cart.find(l => l.id === line.id);
+  if (ex){ if (ex.qty < (ex.max === null ? 999 : ex.max)) ex.qty++; else { toast("Meer dan op voorraad kan niet."); return; } }
+  else cart.push(line);
+  saveCart(); toast("In mandje: " + line.label);
+}
+function cartTotal(){ return cart.reduce((a, l) => a + l.qty * (l.price || 0), 0); }
+function renderCart(){
+  const box = $("cartLines");
+  if (!cart.length){ box.innerHTML = '<div style="padding:16px 0;color:var(--grey);">Het mandje is leeg.</div>'; }
+  else box.innerHTML = cart.map((l, i) => `
+    <div class="cart-line">
+      <div><div class="cl-name">${escapeHTML(l.label)}</div><div class="cl-sub">${escapeHTML(l.sub || "")}${l.max !== null ? " · " + l.max + " op voorraad" : ""}</div></div>
+      <div class="cl-ctl">
+        <button type="button" data-a="minus" data-i="${i}">−</button><b>${l.qty}</b><button type="button" data-a="plus" data-i="${i}">+</button>
+        <input type="text" inputmode="decimal" data-a="price" data-i="${i}" value="${l.price === null || l.price === undefined ? "" : String(l.price).replace(".", ",")}" placeholder="€">
+        <button type="button" data-a="del" data-i="${i}">🗑</button>
+      </div>
+      ${l.err ? `<div class="cl-err">${escapeHTML(l.err)}</div>` : ""}
+    </div>`).join("");
+  $("cartTotal").textContent = fmtPrice(cartTotal());
+}
+function openCart(){ $("cartMsg").textContent = ""; renderCart(); $("cartBackdrop").classList.add("show"); }
+$("cartFab").addEventListener("click", openCart);
+$("closeCart").addEventListener("click", () => $("cartBackdrop").classList.remove("show"));
+$("cartBackdrop").addEventListener("click", (e) => { if (e.target.id === "cartBackdrop") e.currentTarget.classList.remove("show"); });
+$("cartLines").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const i = +b.dataset.i, l = cart[i]; if (!l) return;
+  if (b.dataset.a === "plus"){ if (l.max === null || l.qty < l.max) l.qty++; }
+  else if (b.dataset.a === "minus"){ if (l.qty > 1) l.qty--; }
+  else if (b.dataset.a === "del"){ cart.splice(i, 1); }
+  saveCart(); renderCart();
+});
+$("cartLines").addEventListener("change", (e) => {
+  const inp = e.target.closest("input[data-a=price]"); if (!inp) return;
+  const l = cart[+inp.dataset.i]; if (!l) return;
+  l.price = parseMoney(inp.value); saveCart(); renderCart();
+});
+$("cartClear").addEventListener("click", () => { cart = []; saveCart(); renderCart(); });
+function cardLine(c){
+  const o = c.orig || c;
+  return { id: "c|" + nkey(o.name, o.set, o.number), type: "card", label: c.name, sub: c.set + " · " + (c.number || ""),
+    qty: 1, price: c.vkp === undefined ? null : c.vkp, max: c.qty === null || c.qty === undefined ? null : c.qty,
+    match: { matchSet: o.set, matchNumber: o.number, matchName: o.name }, fields: { set: c.set, number: c.number, name: c.name, cond: c.condition || "Near Mint" } };
+}
+$("sfCart").addEventListener("click", () => { if (modalCard) cartAdd(cardLine(modalCard)); });
+$("itCart").addEventListener("click", () => {
+  if (!activeItem) return;
+  const { name, item } = activeItem, d = COLL_DEFS[name], q = itemQty(item);
+  const m = itemMatch(name, item);
+  cartAdd({ id: "i|" + name + "|" + JSON.stringify(m), type: "item", label: d.name(item), sub: d.title, qty: 1,
+    price: itemPrice(item), max: q, sheet: name, match: m });
+});
+$("cartCheckout").addEventListener("click", async () => {
+  if (!cart.length) return;
+  const m = $("cartMsg"), b = $("cartCheckout"); b.disabled = true; m.className = "sf-msg"; m.textContent = "Bezig met afboeken…";
+  cart.forEach(l => { delete l.err; });
+  try {
+    const lines = cart.map(l => l.type === "item"
+      ? { type: "item", sheet: l.sheet, match: l.match, qty: l.qty, price: l.price }
+      : Object.assign({ type: "card", qty: l.qty, price: l.price }, l.match));
+    const j = await apiCall({ action: "sellbatch", lines });
+    const rest = [], total = { n: 0, eur: 0 }; let problems = 0;
+    cart.forEach((l, i) => {
+      const r = (j.results || [])[i];
+      if (!r || !r.ok){ l.err = (r && r.error) || "Niet verwerkt"; rest.push(l); problems++; return; }
+      total.n += r.sold; total.eur += r.sold * (l.price || 0);
+      if (l.type === "card"){
+        afterWrite({ set: l.match.matchSet, number: l.match.matchNumber, name: l.match.matchName }, { qty: r.qty, vkp: r.vkp }, l.fields);
+      } else {
+        const it = (collections[l.sheet] || []).find(x => JSON.stringify(itemMatch(l.sheet, x)) === JSON.stringify(l.match));
+        if (it) it.aantal = String(r.qty);
+      }
+      if (r.short){ l.qty = l.qty - r.sold; l.err = "Maar " + r.sold + " beschikbaar, de rest is niet afgeboekt."; rest.push(l); problems++; }
+    });
+    try { localStorage.setItem(COLL_CACHE_KEY, JSON.stringify(collections)); } catch(e){}
+    cart = rest; saveCart(); renderCart(); renderApp();
+    m.className = "sf-msg " + (problems ? "err" : "ok");
+    m.textContent = "Afgeboekt: " + total.n + " stuk(s), " + fmtPrice(total.eur) + (problems ? " – " + problems + " regel(s) niet volledig verwerkt." : " ✓");
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+  b.disabled = false;
+});
+
+/* ---- dagoverzicht ---- */
+function todayStr(){ const d = new Date(), p = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+$("dayDate").value = todayStr();
+$("dayBtn").addEventListener("click", async () => {
+  const m = $("dayMsg"), out = $("dayOut"); m.className = "sf-msg"; m.textContent = "Bezig…"; out.innerHTML = "";
+  try {
+    const j = await apiCall({ action: "daysummary", date: $("dayDate").value || todayStr() });
+    m.textContent = "";
+    const tile = (v, l) => `<div class="day-tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+    const lines = (j.lines || []).slice().reverse().map(x =>
+      `<div><span>${escapeHTML(x.time)} · ${x.type === "verkocht" ? "🟢" : "🔵"} ${x.qty}× ${escapeHTML(x.name || "")}</span><b>${fmtPrice(x.qty * x.price)}</b></div>`).join("");
+    out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}</div>` +
+      (lines ? `<div class="day-list">${lines}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen of aankopen op deze dag.</div>`);
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+});
+updateCartFab();
+
 /* ==========================================================
    EVENTS + INIT
    ========================================================== */
@@ -2223,7 +2377,7 @@ document.getElementById("pinInput").addEventListener("keydown", (e) => {
 function checkPin(){
   const val = document.getElementById("pinInput").value.trim();
   if (val === getPin()){
-    adminUnlocked = true; updateScanBtn();
+    adminUnlocked = true; updateScanBtn(); try{updateCartFab();}catch(e){}
     try { sessionStorage.setItem(STAFF_KEY, "1"); } catch(e){}
     showAdminContent();
   } else {
