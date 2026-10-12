@@ -372,6 +372,11 @@
   .btn-primary:active{ background:var(--red-dark); }
   .btn-ghost{ background:var(--cream-alt); color:var(--ink); }
   .btn-danger-sm{ background:none; color:var(--red-dark); font-weight:700; font-size:13px; border:none; cursor:pointer; }
+
+  .admin-tabs{ position:sticky; top:0; z-index:5; display:flex; gap:6px; background:var(--white); padding:10px 0 10px; margin:0 0 12px; border-bottom:1px solid var(--card-line); overflow-x:auto; }
+  .admin-tabs button{ flex:1 0 auto; border:0; border-radius:999px; padding:10px 16px; font-weight:800; font-size:14px; background:var(--cream-alt); color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .admin-tabs button.on{ background:var(--yellow,#FFCB05); color:#10181C; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+  .atab{ display:none; } .atab.on{ display:block; }
   .admin-divider{ border:none; border-top:1px solid var(--card-line); margin:20px 0 16px; }
   .admin-section-title{ font-family:var(--font-display); font-size:16px; font-weight:700; margin:0 0 10px; }
   .manual-list{ display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; }
@@ -470,7 +475,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#10181C" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="#10181C" stroke-width="2" stroke-linecap="round"/></svg>
       <input id="searchInput" type="text" placeholder="Zoek op naam of nummer…" autocomplete="off">
     </div>
-    <button id="scanAiBtn" type="button" class="btn btn-yellow" style="display:none;padding:0 14px;white-space:nowrap;" title="Kaart scannen met de camera">📷 Scan kaart</button>
+    <button id="scanAiBtn" type="button" class="btn btn-yellow" style="display:none;padding:12px 16px;white-space:nowrap;width:auto;flex:none;font-size:14px;" title="Kaart scannen met de camera">📷 Scan kaart</button>
   </div>
   <div class="chip-row" id="chipRow"></div>
   <svg class="wave-divider" viewBox="0 0 1200 34" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -505,7 +510,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v29</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v30</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -591,12 +596,58 @@
         </div>
       </div>
       <div class="admin-body">
+        <div class="admin-tabs" id="adminTabs">
+          <button type="button" data-tab="kassa" class="on">Kassa</button>
+          <button type="button" data-tab="kaarten">Kaarten</button>
+          <button type="button" data-tab="weergave">Foto's &amp; labels</button>
+          <button type="button" data-tab="instellingen">Instellingen</button>
+        </div>
+        <div class="atab on" data-tab="kassa">
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button type="button" class="btn btn-yellow" id="aqScan">📷 Scan kaart</button>
+          <button type="button" class="btn btn-primary" id="aqCart">🛒 Mandje</button>
+        </div>
+        <hr class="admin-divider" style="margin-top:0;">
+        <div class="admin-section-title">Aankoop van klant registreren</div>
+        <form id="purchaseForm">
+          <button type="button" class="btn btn-yellow" id="pScanBtn" style="width:100%;margin-bottom:10px;">📷 Kaart scannen (vult set, nummer en naam in)</button>
+          <div class="field"><label>Zoek in catalogus (naam, evt. + nummer)</label><input id="pCat" type="text" placeholder="bv. pikachu 025" autocomplete="off"></div>
+          <div id="pCatRes" class="day-list" style="margin-bottom:10px;"></div>
+          <div class="field-row">
+            <div class="field"><label>Set</label><input id="pSet" list="setList" required></div>
+            <div class="field"><label>Nummer</label><input id="pNumber"></div>
+          </div>
+          <div class="field"><label>Kaartnaam</label><input id="pName" required></div>
+          <div class="field-row">
+            <div class="field"><label>Aantal</label><input id="pQty" type="number" min="1" step="1" value="1"></div>
+            <div class="field"><label>Aankoopprijs (€)</label><input id="pBuy" type="text" inputmode="decimal"></div>
+            <div class="field"><label>Verkoopprijs (€)</label><input id="pVkp" type="text" inputmode="decimal"></div>
+          </div>
+          <button type="submit" class="btn btn-primary">Aankoop registreren</button>
+          <div class="sf-msg" id="pMsg"></div>
+        </form>
+        <div class="admin-note">Bestaat de kaart al in de sheet, dan wordt het aantal opgehoogd. Anders komt er een nieuwe rij bij. Alles wordt gelogd in het tabblad "Log".</div>
+
+        
+        <hr class="admin-divider">
+        <div class="admin-section-title">Dagoverzicht</div>
+        <div class="field-row">
+          <div class="field"><label>Datum</label><input id="dayDate" type="date"></div>
+        </div>
+        <button class="btn btn-primary" id="dayBtn" type="button" style="width:100%;">Overzicht tonen</button>
+        <div class="sf-msg" id="dayMsg"></div>
+        <div id="dayOut"></div>
+
+        
+        </div>
+        <div class="atab" data-tab="kaarten">
         <div class="admin-section-title">Bestaande kaart aanpassen</div>
         <div class="field">
           <input id="editSearchInput" type="text" placeholder="Zoek een kaart om aan te passen…" autocomplete="off">
         </div>
         <div class="manual-list" id="editSearchResults" style="margin-bottom:16px;"></div>
 
+        
         <hr class="admin-divider">
         <div class="admin-section-title" id="manualFormTitle">Nieuwe kaart toevoegen</div>
         <form id="manualForm">
@@ -617,17 +668,31 @@
           <button type="button" class="btn btn-ghost" id="cancelEditBtn" style="width:100%; margin-top:8px; display:none;">Annuleren</button>
         </form>
 
+        
         <hr class="admin-divider">
-        <div class="admin-section-title">Handmatig toegevoegde kaarten</div>
-        <div class="manual-list" id="manualList"></div>
-        <div class="admin-note">Dit zijn oudere kaarten die enkel op dit toestel staan. Nieuwe kaarten die je hierboven toevoegt, gaan rechtstreeks naar de Google Sheet en verschijnen op alle toestellen.</div>
+        <div class="admin-section-title">Slab of sealed toevoegen</div>
+        <form id="itemForm">
+          <div class="field"><label>Soort</label><select id="iType"><option value="Slabs">Slab (gegradeerde kaart)</option><option value="Sealed">Sealed product</option></select></div>
+          <div class="field"><label id="iNameLabel">Kaartnaam</label><input id="iName" required></div>
+          <div class="field"><label>Set</label><input id="iSet" list="setList" required></div>
+          <div class="field-row" id="iSlabRow">
+            <div class="field"><label>Nummer</label><input id="iNumber"></div>
+            <div class="field"><label>Grading</label><input id="iGrading" placeholder="PSA, BGS, CGC"></div>
+            <div class="field"><label>Grade</label><input id="iGrade" placeholder="10"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Aantal</label><input id="iQty" type="number" min="1" step="1" value="1"></div>
+            <div class="field"><label>Verkoopprijs (€)</label><input id="iPriceNew" type="text" inputmode="decimal"></div>
+          </div>
+          <div class="field"><label>Foto URL (optioneel)</label><input id="iFoto" type="url" placeholder="https://…"></div>
+          <button type="submit" class="btn btn-primary">Toevoegen aan de sheet</button>
+          <div class="sf-msg" id="iMsg"></div>
+        </form>
+        <div class="admin-note">Bij een slab zoekt de app zelf een kaartfoto als je geen link invult. Bij sealed producten kan je een foto-link meegeven.</div>
 
-        <hr class="admin-divider">
-        <div class="admin-section-title">Aangepaste kaarten</div>
-        <div class="manual-list" id="editedList"></div>
-        <div class="admin-note">Oude lokale aanpassingen op dit toestel. Nieuwe aanpassingen worden direct in de Google Sheet opgeslagen. Gebruik "Herstel origineel" om een oude lokale aanpassing te verwijderen.</div>
-
-        <hr class="admin-divider">
+        
+        </div>
+        <div class="atab" data-tab="weergave">
         <div class="admin-section-title">Foto handmatig instellen</div>
         <form id="overrideForm">
           <div class="field-row">
@@ -650,6 +715,7 @@
         <div class="manual-list" id="overrideList" style="margin-top:12px;"></div>
         <div class="admin-note">Gebruik dit om zelf een foto te koppelen aan een kaart waarvoor de automatische opzoeking (TCGdex) geen afbeelding kan vinden — bv. bepaalde zeldzame promo's. Vul een link in óf upload rechtstreeks een foto. Ook dit blijft lokaal op dit toestel.</div>
 
+        
         <hr class="admin-divider">
         <div class="admin-section-title">Set-logo handmatig instellen</div>
         <form id="setLogoForm">
@@ -668,69 +734,7 @@
         </form>
         <div class="manual-list" id="setLogoList" style="margin-top:12px;"></div>
 
-        <hr class="admin-divider">
-        <div class="admin-section-title">Slab of sealed toevoegen</div>
-        <form id="itemForm">
-          <div class="field"><label>Soort</label><select id="iType"><option value="Slabs">Slab (gegradeerde kaart)</option><option value="Sealed">Sealed product</option></select></div>
-          <div class="field"><label id="iNameLabel">Kaartnaam</label><input id="iName" required></div>
-          <div class="field"><label>Set</label><input id="iSet" list="setList" required></div>
-          <div class="field-row" id="iSlabRow">
-            <div class="field"><label>Nummer</label><input id="iNumber"></div>
-            <div class="field"><label>Grading</label><input id="iGrading" placeholder="PSA, BGS, CGC"></div>
-            <div class="field"><label>Grade</label><input id="iGrade" placeholder="10"></div>
-          </div>
-          <div class="field-row">
-            <div class="field"><label>Aantal</label><input id="iQty" type="number" min="1" step="1" value="1"></div>
-            <div class="field"><label>Verkoopprijs (€)</label><input id="iPriceNew" type="text" inputmode="decimal"></div>
-          </div>
-          <div class="field"><label>Foto URL (optioneel)</label><input id="iFoto" type="url" placeholder="https://…"></div>
-          <button type="submit" class="btn btn-primary">Toevoegen aan de sheet</button>
-          <div class="sf-msg" id="iMsg"></div>
-        </form>
-        <div class="admin-note">Bij een slab zoekt de app zelf een kaartfoto als je geen link invult. Bij sealed producten kan je een foto-link meegeven.</div>
-
-        <hr class="admin-divider">
-        <div class="admin-section-title">Sheet voorbereiden (eenmalig)</div>
-        <button type="button" class="btn btn-yellow" id="setupBtn">Sheet voorbereiden (Conditie, Slabs, Sealed)</button>
-        <div class="sf-msg" id="setupMsg"></div>
-        <div class="admin-note">Voegt in Blad1 de kolom "Conditie" toe (standaard "Near Mint"), maakt de tabbladen "Slabs" en "Sealed" aan als ze nog niet bestaan, en verwijdert de kolom "Type" uit Sealed.</div>
-
-        <hr class="admin-divider">
-        <div class="admin-section-title">Catalogus (alle Engelse kaarten)</div>
-        <button class="btn btn-primary" id="catBtn" type="button" style="width:100%;">Catalogus bijwerken</button>
-        <div class="sf-msg" id="catMsg"></div>
-        <div class="admin-note">Zet alle Engelse kaarten uit TCGdex, per set en per nummer, in het tabblad "Catalogus" van de sheet. Duurt een paar minuten; laat dit scherm open. Het raakt jullie voorraad (Blad1) niet aan.</div>
-
-        <hr class="admin-divider">
-        <div class="admin-section-title">Dagoverzicht</div>
-        <div class="field-row">
-          <div class="field"><label>Datum</label><input id="dayDate" type="date"></div>
-        </div>
-        <button class="btn btn-primary" id="dayBtn" type="button" style="width:100%;">Overzicht tonen</button>
-        <div class="sf-msg" id="dayMsg"></div>
-        <div id="dayOut"></div>
-
-        <hr class="admin-divider">
-        <div class="admin-section-title">Aankoop van klant registreren</div>
-        <form id="purchaseForm">
-          <button type="button" class="btn btn-yellow" id="pScanBtn" style="width:100%;margin-bottom:10px;">📷 Kaart scannen (vult set, nummer en naam in)</button>
-          <div class="field"><label>Zoek in catalogus (naam, evt. + nummer)</label><input id="pCat" type="text" placeholder="bv. pikachu 025" autocomplete="off"></div>
-          <div id="pCatRes" class="day-list" style="margin-bottom:10px;"></div>
-          <div class="field-row">
-            <div class="field"><label>Set</label><input id="pSet" list="setList" required></div>
-            <div class="field"><label>Nummer</label><input id="pNumber"></div>
-          </div>
-          <div class="field"><label>Kaartnaam</label><input id="pName" required></div>
-          <div class="field-row">
-            <div class="field"><label>Aantal</label><input id="pQty" type="number" min="1" step="1" value="1"></div>
-            <div class="field"><label>Aankoopprijs (€)</label><input id="pBuy" type="text" inputmode="decimal"></div>
-            <div class="field"><label>Verkoopprijs (€)</label><input id="pVkp" type="text" inputmode="decimal"></div>
-          </div>
-          <button type="submit" class="btn btn-primary">Aankoop registreren</button>
-          <div class="sf-msg" id="pMsg"></div>
-        </form>
-        <div class="admin-note">Bestaat de kaart al in de sheet, dan wordt het aantal opgehoogd. Anders komt er een nieuwe rij bij. Alles wordt gelogd in het tabblad "Log".</div>
-
+        
         <hr class="admin-divider">
         <div class="admin-section-title">QR-labels printen</div>
         <div class="field"><label>Set</label><select id="qrSetSelect"></select></div>
@@ -738,7 +742,9 @@
           <select id="qrSizeSelect"><option value="15">Heel klein (15 mm)</option><option value="20" selected>Klein (20 mm)</option><option value="25">Middel (25 mm)</option><option value="35">Groot (35 mm)</option></select></div>
         <button type="button" class="btn btn-primary" id="qrPrintBtn">Labels printen</button>
 
-        <hr class="admin-divider">
+        
+        </div>
+        <div class="atab" data-tab="instellingen">
         <div class="admin-section-title">Koppeling met de sheet</div>
         <div class="field"><label>Sleutel (eenmalig per toestel)</label><input id="apiSecret" type="password" autocomplete="off" placeholder="Geheime sleutel van het script"></div>
         <div class="btn-row">
@@ -750,6 +756,33 @@
         <button type="button" class="btn btn-yellow" id="dedupeBtn">Dubbele kaarten in de sheet samenvoegen</button>
         <div class="sf-msg" id="dedupeMsg"></div>
         <div class="admin-note">Kaarten met dezelfde set, nummer en naam worden één rij. De aantallen worden opgeteld. De sheet kan enkele minuten nodig hebben om in de app te verschijnen.</div>
+        <hr class="admin-divider">
+        <div class="admin-section-title">Catalogus (alle Engelse kaarten)</div>
+        <button class="btn btn-primary" id="catBtn" type="button" style="width:100%;">Catalogus bijwerken</button>
+        <div class="sf-msg" id="catMsg"></div>
+        <div class="admin-note">Zet alle Engelse kaarten uit TCGdex, per set en per nummer, in het tabblad "Catalogus" van de sheet. Duurt een paar minuten; laat dit scherm open. Het raakt jullie voorraad (Blad1) niet aan.</div>
+
+        
+        <hr class="admin-divider">
+        <div class="admin-section-title">Sheet voorbereiden (eenmalig)</div>
+        <button type="button" class="btn btn-yellow" id="setupBtn">Sheet voorbereiden (Conditie, Slabs, Sealed)</button>
+        <div class="sf-msg" id="setupMsg"></div>
+        <div class="admin-note">Voegt in Blad1 de kolom "Conditie" toe (standaard "Near Mint"), maakt de tabbladen "Slabs" en "Sealed" aan als ze nog niet bestaan, en verwijdert de kolom "Type" uit Sealed.</div>
+
+        
+        <hr class="admin-divider">
+        <div class="admin-section-title">Handmatig toegevoegde kaarten</div>
+        <div class="manual-list" id="manualList"></div>
+        <div class="admin-note">Dit zijn oudere kaarten die enkel op dit toestel staan. Nieuwe kaarten die je hierboven toevoegt, gaan rechtstreeks naar de Google Sheet en verschijnen op alle toestellen.</div>
+
+        
+        <hr class="admin-divider">
+        <div class="admin-section-title">Aangepaste kaarten</div>
+        <div class="manual-list" id="editedList"></div>
+        <div class="admin-note">Oude lokale aanpassingen op dit toestel. Nieuwe aanpassingen worden direct in de Google Sheet opgeslagen. Gebruik "Herstel origineel" om een oude lokale aanpassing te verwijderen.</div>
+
+        
+        </div>
       </div>
     </div>
   </div>
@@ -2420,6 +2453,20 @@ $("catBtn").addEventListener("click", async () => {
   } catch(err){ m.className = "sf-msg err"; m.textContent = (err.message || String(err)) + " Druk opnieuw om verder te gaan."; }
   b.disabled = false;
 });
+
+
+/* ---- beheer: tabbladen ---- */
+const ADMIN_TAB_KEY = "pocketdrop_admin_tab_v1";
+function showAdminTab(name){
+  document.querySelectorAll("#adminTabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+  document.querySelectorAll(".atab").forEach(t => t.classList.toggle("on", t.dataset.tab === name));
+  try { sessionStorage.setItem(ADMIN_TAB_KEY, name); } catch(e){}
+  const m = document.getElementById("adminModal"); if (m) m.scrollTop = 0;
+}
+$("adminTabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) showAdminTab(b.dataset.tab); });
+try { const t = sessionStorage.getItem(ADMIN_TAB_KEY); if (t) showAdminTab(t); } catch(e){}
+$("aqScan").addEventListener("click", () => { $("adminBackdrop").classList.remove("show"); scanAndOpen(); });
+$("aqCart").addEventListener("click", () => { $("adminBackdrop").classList.remove("show"); openCart(); });
 
 /* ==========================================================
    EVENTS + INIT
