@@ -528,6 +528,15 @@
   .idle-cta{ margin-top:6px; display:inline-block; padding:14px 30px; border-radius:999px; background:#FFCB05; color:#10181C; font-family:var(--font-display); font-weight:800; font-size:20px; box-shadow:0 8px 18px rgba(0,30,60,.3); animation:idlePulse 2.2s ease-in-out infinite; }
   @keyframes idlePulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.06); } }
   @media (max-width:560px){ .idle-card.side{ display:none; } .idle-logo{ height:100px; } }
+
+  /* v45: QR-code naar de app */
+  .idle-qr{ position:absolute !important; right:22px; bottom:22px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.95); color:#10181C; border-radius:14px; padding:8px 12px 8px 8px; font-weight:700; font-size:14px; line-height:1.3; text-align:left; max-width:290px; box-shadow:0 8px 18px rgba(0,30,60,.3); }
+  .idle-qr svg{ width:96px; height:96px; display:block; }
+
+  /* v46: actieve beurs */
+  .fair-box{ background:var(--cream-alt); border-radius:14px; padding:12px 14px 6px; margin-bottom:14px; }
+  .fair-now{ font-size:13.5px; font-weight:700; margin-bottom:8px; color:var(--water-deep); }
+  .fair-now.off{ color:var(--grey); font-weight:600; }
 </style>
 </head>
 <body>
@@ -537,6 +546,7 @@
   <div class="idle-stage" id="idleStage"></div>
   <div class="idle-info"><div class="idle-name" id="idleName"></div><div class="idle-price" id="idlePrice"></div></div>
   <div class="idle-cta">Tik om te beginnen</div>
+  <div class="idle-qr"><div id="idleQr"></div><span>Scan en ontdek onze catalogus op je eigen telefoon</span></div>
 </div>
 <header class="top">
   <div class="top-row">
@@ -593,7 +603,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v44</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v46</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -684,6 +694,18 @@
         <div class="btn-row" style="margin-bottom:14px;">
           <button type="button" class="btn btn-yellow" id="aqScan">📷 Scan kaart</button>
           <button type="button" class="btn btn-primary" id="aqCart">🛒 Mandje</button>
+        </div>
+        <div class="fair-box">
+          <div class="admin-section-title" style="margin-bottom:6px;">Actieve beurs</div>
+          <div id="fairNow" class="fair-now"></div>
+          <div class="field-row">
+            <div class="field" style="flex:1;"><input id="fairInput" type="text" maxlength="60" placeholder="bv. Antwerpen 15 november" autocomplete="off"></div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-primary" id="fairSave">Beurs starten</button>
+            <button type="button" class="btn btn-ghost" id="fairStop">Beurs stoppen</button>
+          </div>
+          <div class="sf-msg" id="fairMsg"></div>
         </div>
         <hr class="admin-divider" style="margin-top:0;">
         <div class="admin-section-title">Aankoop van klant registreren</div>
@@ -946,6 +968,8 @@
       <div class="admin-note" id="scanHint">Richt de camera op de QR-code van een kaart.</div>
     </div>
   </div>
+</div>
+</div>
 </div>
 <div id="printSheet"></div>
 <div id="toast"></div>
@@ -1335,7 +1359,7 @@ function renderApp(){
   browse.style.display = currentView === "browse" ? "" : "none";
   collV.style.display = currentView === "coll" ? "" : "none";
   chipRow.style.display = currentView === "browse" ? "" : "none";
-  { const hi = document.getElementById("heroInfo"); if (FAIR_INFO){ hi.textContent = FAIR_INFO; hi.style.display = ""; } }
+  updateHeroInfo();
   if (currentView === "home"){ renderHome(); }
   else if (currentView === "coll"){ renderColl(); }
   else { render(); }
@@ -2572,8 +2596,10 @@ $("stBtn").addEventListener("click", async () => {
     const sets = j.sets.map(x => `<div><span>${escapeHTML(x.set)} · ${x.qty}×</span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
     const top = j.top.map(x => `<div><span>${escapeHTML(x.name)} <small style="color:var(--grey)">${escapeHTML(x.set)}</small> · ${x.qty}×</span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
     const avg = j.days.filter(d => d.sold).length ? j.revenue / j.days.filter(d => d.sold).length : 0;
+    const fmtD = d => d.split("-").reverse().slice(0, 2).join("/");
+    const fairs = (j.fairs || []).map(x => `<div><span>${escapeHTML(x.fair)} <small style="color:var(--grey)">${x.first === x.last ? fmtD(x.first) : fmtD(x.first) + " – " + fmtD(x.last)} · ${x.sold}×</small></span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
     out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}${tile(fmtPrice(avg), "gemiddeld per verkoopdag")}</div>` + bars +
-      (sets ? `<div class="st-h">Best verkochte sets</div><div class="day-list">${sets}</div>` : "") +
+      (fairs ? `<div class="st-h">Omzet per beurs</div><div class="day-list">${fairs}</div>` : "") + (sets ? `<div class="st-h">Best verkochte sets</div><div class="day-list">${sets}</div>` : "") +
       (top ? `<div class="st-h">Best verkochte kaarten</div><div class="day-list">${top}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen in deze periode.</div>`) +
       `<div class="export-row"><button class="btn btn-yellow" type="button" id="stExp">⬇ Download CSV</button></div>`;
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
@@ -2583,6 +2609,7 @@ $("stOut").addEventListener("click", (e) => {
   const rows = [["Datum", "Kaarten verkocht", "Omzet", "Kaarten ingekocht", "Inkoop"]];
   j.days.forEach(d => rows.push([d.date, d.sold, csvNum(d.revenue), d.bought, csvNum(d.cost)]));
   rows.push(["Totaal", j.sold, csvNum(j.revenue), j.bought, csvNum(j.cost)]);
+  rows.push([]); rows.push(["Beurs", "Van", "Tot", "Kaarten verkocht", "Omzet", "Inkoop"]); (j.fairs || []).forEach(x => rows.push([x.fair, x.first, x.last, x.sold, csvNum(x.revenue), csvNum(x.cost)]));
   rows.push([]); rows.push(["Best verkochte sets", "Aantal", "Omzet"]); j.sets.forEach(x => rows.push([x.set, x.qty, csvNum(x.revenue)]));
   rows.push([]); rows.push(["Best verkochte kaarten", "Set", "Aantal", "Omzet"]); j.top.forEach(x => rows.push([x.name, x.set, x.qty, csvNum(x.revenue)]));
   downloadCsv("pocketdrop-statistieken-" + j.from + "_" + j.to + ".csv", rows);
@@ -2667,6 +2694,49 @@ $("idleScreen").addEventListener("click", hideIdle);
 ["pointerdown", "keydown", "scroll", "touchstart"].forEach(ev => document.addEventListener(ev, () => { if (!$("idleScreen").classList.contains("show")) armIdle(); }, { passive: true, capture: true }));
 armIdle();
 try { if (new URLSearchParams(location.search).get("rust")) setTimeout(() => showIdle(true), 1500); } catch(e){}
+
+/* ---- QR-code naar de app (alleen op het rustscherm) ---- */
+try { $("idleQr").innerHTML = QR.svg(baseUrl()); } catch(e){}
+
+/* ---- v46: actieve beurs (gedeeld via het Google Script; elke verkoop krijgt de beurs in de Log) ---- */
+const FAIR_CACHE_KEY = "pocketdrop_fair_v1";
+let currentFair = "";
+try { currentFair = localStorage.getItem(FAIR_CACHE_KEY) || ""; } catch(e){}
+function updateHeroInfo(){
+  const hi = document.getElementById("heroInfo"); if (!hi) return;
+  const t = currentFair ? "📍 " + currentFair : FAIR_INFO;
+  hi.textContent = t; hi.style.display = t ? "" : "none";
+  const fi = document.getElementById("fairInput"); if (fi && currentFair && !fi.value && document.activeElement !== fi) fi.value = currentFair;
+  const fn = document.getElementById("fairNow");
+  if (fn){ fn.textContent = currentFair ? "Nu bezig: " + currentFair : "Geen beurs actief. Verkopen krijgen geen beursnaam."; fn.classList.toggle("off", !currentFair); }
+}
+function setFairLocal(v){
+  currentFair = v || "";
+  try { localStorage.setItem(FAIR_CACHE_KEY, currentFair); } catch(e){}
+  updateHeroInfo();
+}
+async function refreshFair(){
+  try {
+    const r = await fetch(API_URL + "?action=fair", { cache: "no-store" });
+    const j = await r.json();
+    if (j && j.ok) setFairLocal(j.fair || "");
+  } catch(e){}
+}
+async function saveFair(name){
+  const m = $("fairMsg"); m.className = "sf-msg"; m.textContent = "Bezig…";
+  try {
+    const j = await apiCall({ action: "setfair", name });
+    setFairLocal(j.fair || ""); m.className = "sf-msg ok";
+    m.textContent = j.fair ? "Beurs gestart: " + j.fair + " ✓" : "Beurs gestopt ✓";
+    if (!j.fair) $("fairInput").value = "";
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+}
+$("fairSave").addEventListener("click", () => { const v = $("fairInput").value.trim(); if (!v){ const m = $("fairMsg"); m.className = "sf-msg err"; m.textContent = "Vul eerst de naam van de beurs in."; return; } saveFair(v); });
+$("fairStop").addEventListener("click", () => saveFair(""));
+$("fairInput").value = currentFair;
+updateHeroInfo();
+refreshFair();
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshFair(); });
 updateCartFab();
 
 
