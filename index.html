@@ -432,6 +432,8 @@
     #printSheet .lbl svg{ width:var(--qr, 20mm); height:var(--qr, 20mm); display:block; margin:0 auto; }
     #printSheet .l-name{ font-weight:700; font-size:6.5pt; line-height:1.15; margin-top:0.5mm; } #printSheet .l-sub{ font-size:5.5pt; color:#333; line-height:1.15; }
   }
+  .section-title{ font-family:var(--font-display); font-weight:800; font-size:20px; color:var(--water-deep); margin:18px 4px 10px; }
+  .coll-icon{ width:92px; height:92px; }
 </style>
 </head>
 <body>
@@ -450,6 +452,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#10181C" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="#10181C" stroke-width="2" stroke-linecap="round"/></svg>
       <input id="searchInput" type="text" placeholder="Zoek op naam of nummer…" autocomplete="off">
     </div>
+    <button id="scanAiBtn" type="button" class="btn btn-yellow" style="display:none;padding:0 14px;white-space:nowrap;" title="Kaart scannen met de camera">📷 Scan kaart</button>
     <select id="sortSelect">
       <option value="number" selected>Nummering</option>
       <option value="name">Naam A–Z</option>
@@ -480,10 +483,18 @@
     </div>
     <div class="grid" id="grid"></div>
   </div>
+  <div id="collView" style="display:none;">
+    <div class="meta-row">
+      <button id="collBackBtn" class="back-btn">← Terug</button>
+      <span id="collCount"></span>
+      <span></span>
+    </div>
+    <div class="grid" id="collItems"></div>
+  </div>
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v17</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v23</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -503,6 +514,7 @@
         <div class="detail-cell"><div class="label">Status</div><div class="value" id="modalStock"></div></div>
         <div class="detail-cell" id="modalLowestWrap"><div class="label">Cardmarket richtprijs</div><div class="value" id="modalLowest"></div></div>
         <div class="detail-cell"><div class="label">Set</div><div class="value" id="modalSet2"></div></div>
+        <div class="detail-cell"><div class="label">Conditie</div><div class="value" id="modalCond"></div></div>
       </div>
       <div class="staff-box" id="staffLock" style="display:none;">
         <h4>Personeel</h4>
@@ -522,6 +534,8 @@
             <div class="field"><label>Aantal</label><input id="sfQty" type="number" min="0" step="1"></div>
             <div class="field"><label>Verkoopprijs (€)</label><input id="sfVkp" type="text" inputmode="decimal"></div>
           </div>
+          <div class="field"><label>Conditie</label>
+            <select id="sfCond"><option>Mint</option><option>Near Mint</option><option>Lightly Played</option><option>Moderately Played</option><option>Heavily Played</option><option>Damaged</option></select></div>
           <button class="btn btn-primary" id="sfSave" type="button" style="width:100%;">Opslaan in sheet</button>
           <details><summary>Set / nummer / naam wijzigen</summary>
             <div class="field"><label>Set</label><input id="sfSet"></div>
@@ -643,8 +657,36 @@
         <div class="manual-list" id="setLogoList" style="margin-top:12px;"></div>
 
         <hr class="admin-divider">
+        <div class="admin-section-title">Slab of sealed toevoegen</div>
+        <form id="itemForm">
+          <div class="field"><label>Soort</label><select id="iType"><option value="Slabs">Slab (gegradeerde kaart)</option><option value="Sealed">Sealed product</option></select></div>
+          <div class="field"><label id="iNameLabel">Kaartnaam</label><input id="iName" required></div>
+          <div class="field"><label>Set</label><input id="iSet" list="setList" required></div>
+          <div class="field-row" id="iSlabRow">
+            <div class="field"><label>Nummer</label><input id="iNumber"></div>
+            <div class="field"><label>Grading</label><input id="iGrading" placeholder="PSA, BGS, CGC"></div>
+            <div class="field"><label>Grade</label><input id="iGrade" placeholder="10"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Aantal</label><input id="iQty" type="number" min="1" step="1" value="1"></div>
+            <div class="field"><label>Verkoopprijs (€)</label><input id="iPriceNew" type="text" inputmode="decimal"></div>
+          </div>
+          <div class="field"><label>Foto URL (optioneel)</label><input id="iFoto" type="url" placeholder="https://…"></div>
+          <button type="submit" class="btn btn-primary">Toevoegen aan de sheet</button>
+          <div class="sf-msg" id="iMsg"></div>
+        </form>
+        <div class="admin-note">Bij een slab zoekt de app zelf een kaartfoto als je geen link invult. Bij sealed producten kan je een foto-link meegeven.</div>
+
+        <hr class="admin-divider">
+        <div class="admin-section-title">Sheet voorbereiden (eenmalig)</div>
+        <button type="button" class="btn btn-yellow" id="setupBtn">Sheet voorbereiden (Conditie, Slabs, Sealed)</button>
+        <div class="sf-msg" id="setupMsg"></div>
+        <div class="admin-note">Voegt in Blad1 de kolom "Conditie" toe (standaard "Near Mint"), maakt de tabbladen "Slabs" en "Sealed" aan als ze nog niet bestaan, en verwijdert de kolom "Type" uit Sealed.</div>
+
+        <hr class="admin-divider">
         <div class="admin-section-title">Aankoop van klant registreren</div>
         <form id="purchaseForm">
+          <button type="button" class="btn btn-yellow" id="pScanBtn" style="width:100%;margin-bottom:10px;">📷 Kaart scannen (vult set, nummer en naam in)</button>
           <div class="field-row">
             <div class="field"><label>Set</label><input id="pSet" list="setList" required></div>
             <div class="field"><label>Nummer</label><input id="pNumber"></div>
@@ -680,6 +722,37 @@
         <div class="sf-msg" id="dedupeMsg"></div>
         <div class="admin-note">Kaarten met dezelfde set, nummer en naam worden één rij. De aantallen worden opgeteld. De sheet kan enkele minuten nodig hebben om in de app te verschijnen.</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="itemBackdrop">
+  <div class="modal">
+    <button class="close-x" id="closeItem">✕</button>
+    <div class="modal-head">
+      <div class="modal-img" id="itemImg"></div>
+      <div class="modal-title-block">
+        <div class="modal-set" id="itemSet"></div>
+        <div class="modal-name" id="itemName"></div>
+        <div class="modal-price" id="itemPrice"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" id="itemDetails"></div>
+      <div class="staff-box" id="itemStaff" style="display:none;">
+        <h4>Personeel · beheer dit item</h4>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="itSell" type="button">Verkocht (−1)</button>
+          <button class="btn btn-ghost" id="itRestock" type="button">Bijvullen (+1)</button>
+        </div>
+        <div class="field-row" style="margin-top:12px;">
+          <div class="field"><label>Aantal</label><input id="itQty" type="number" min="0" step="1"></div>
+          <div class="field"><label>Verkoopprijs (€)</label><input id="itPrice" type="text" inputmode="decimal"></div>
+        </div>
+        <button class="btn btn-primary" id="itSave" type="button" style="width:100%;">Opslaan in sheet</button>
+        <div class="sf-msg" id="itMsg"></div>
+      </div>
+      <div class="admin-note" id="itemLockNote" style="display:none;">Personeel: ontgrendel eerst via Beheer (tandwiel) om dit item aan te passen.</div>
     </div>
   </div>
 </div>
@@ -870,7 +943,7 @@ function rowsToCards(rows){
   const header = rows[0].map(h => h.trim().toLowerCase());
   const idx = (name) => header.findIndex(h => h === name);
   const iSet = idx("set"), iNum = idx("number"), iCard = idx("card"),
-        iAantal = idx("aantal"), iCm = idx("cm link"), iLowest = idx("lowest"),
+        iAantal = idx("aantal"), iCm = idx("cm link"), iLowest = idx("lowest"), iCond = idx("conditie"),
         iVkp = idx("verkoopprijs") !== -1 ? idx("verkoopprijs") : idx("vkp");
 
   const cards = [];
@@ -884,6 +957,7 @@ function rowsToCards(rows){
       name,
       qty: toNumber(row[iAantal]),
       cmLink: (row[iCm] || "").trim(),
+      condition: iCond >= 0 ? (row[iCond] || "").trim() : "",
       lowest: toNumber(row[iLowest]),
       vkp: toNumber(row[iVkp]),
       imgKey: null,
@@ -971,6 +1045,7 @@ async function fetchData(isBackground){
     renderApp();
     tryDeepLink(true);
     fetchPhotos();
+    fetchCollections();
   } else {
     lastError = errorDetail;
     if (!csvCards.length){
@@ -1067,18 +1142,15 @@ function goHome(){
 function renderApp(){
   const home = document.getElementById("homeView");
   const browse = document.getElementById("browseView");
+  const collV = document.getElementById("collView");
   const chipRow = document.getElementById("chipRow");
-  if (currentView === "home"){
-    home.style.display = "";
-    browse.style.display = "none";
-    chipRow.style.display = "none";
-    renderHome();
-  } else {
-    home.style.display = "none";
-    browse.style.display = "";
-    chipRow.style.display = "";
-    render();
-  }
+  home.style.display = currentView === "home" ? "" : "none";
+  browse.style.display = currentView === "browse" ? "" : "none";
+  collV.style.display = currentView === "coll" ? "" : "none";
+  chipRow.style.display = currentView === "browse" ? "" : "none";
+  if (currentView === "home"){ renderHome(); }
+  else if (currentView === "coll"){ renderColl(); }
+  else { render(); }
 }
 
 function setsSummary(){
@@ -1126,6 +1198,7 @@ async function renderHome(){
   });
 
   grid.innerHTML = "";
+  renderCollectionTiles(grid);
   ordered.forEach(({ set, count, logo }) => {
     const tile = document.createElement("div");
     tile.className = "set-tile";
@@ -1157,11 +1230,12 @@ function render(){
   renderChips();
   const grid = document.getElementById("grid");
   const list = filteredSorted();
+  const itemHits = document.getElementById("searchInput").value.trim() ? collHits() : [];
   document.getElementById("resultCount").textContent =
-    list.length + (list.length === 1 ? " kaart" : " kaarten") + (document.getElementById("searchInput").value.trim() ? " (alle sets)" : (activeSet !== "Alle" ? " in " + activeSet : ""));
+    (list.length + itemHits.length) + ((list.length + itemHits.length) === 1 ? " resultaat" : " resultaten") + (document.getElementById("searchInput").value.trim() ? " (alle sets)" : (activeSet !== "Alle" ? " in " + activeSet : ""));
 
   grid.innerHTML = "";
-  if (!list.length){
+  if (!list.length && !itemHits.length){
     if (!allCards.length){
       grid.innerHTML = `<div class="empty-state">
         <div class="icon">📡</div>
@@ -1205,6 +1279,7 @@ function render(){
     grid.appendChild(tile);
     observer.observe(tile);
   });
+  itemHits.forEach(h => grid.appendChild(buildItemTile(h.name, h.item)));
 }
 
 function escapeHTML(s){
@@ -1414,6 +1489,7 @@ function openModal(card){
   document.getElementById("modalName").textContent = card.name;
   document.getElementById("modalPrice").textContent = fmtPrice(card.vkp);
   document.getElementById("modalNumber").textContent = card.number || "—";
+  document.getElementById("modalCond").textContent = card.condition || "—";
   const outOfStock = card.qty !== null && card.qty <= 0;
   document.getElementById("modalStock").textContent = card.qty === null ? "—" : (outOfStock ? "Uitverkocht" : card.qty + "× op voorraad");
   document.getElementById("modalLowest").textContent = card.lowest !== null ? fmtPrice(card.lowest) : "—";
@@ -1494,7 +1570,7 @@ function applyPending(cards){
     }
     const c = cards[i];
     if (c.qty === p.qty && c.vkp === p.vkp && nkey(c.name, c.set, c.number) === nk) return;
-    cards[i] = Object.assign({}, c, { set: p.set, number: p.number, name: p.name, qty: p.qty, vkp: p.vkp });
+    cards[i] = Object.assign({}, c, { set: p.set, number: p.number, name: p.name, qty: p.qty, vkp: p.vkp }, p.cond ? { condition: p.cond } : {});
     out.push(p);
   });
   if (out.length !== pend.length) savePending(out);
@@ -1521,7 +1597,7 @@ function afterWrite(oldCard, j, fields){
   const p = {
     oldKey: nkey(o.name, o.set, o.number),
     set: fields.set, number: fields.number, name: fields.name,
-    qty: toNumber(j.qty), vkp: toNumber(j.vkp), at: Date.now()
+    qty: toNumber(j.qty), vkp: toNumber(j.vkp), cond: fields.cond, at: Date.now()
   };
   addPending(p);
   if (oldCard.overridden && oldCard.matchKey){
@@ -1548,6 +1624,9 @@ function renderStaffPanel(){
   $("sfQty").value = c.qty === null ? "" : c.qty;
   $("sfVkp").value = c.vkp === null ? "" : String(c.vkp).replace(".", ",");
   $("sfSet").value = c.set; $("sfNumber").value = c.number; $("sfName").value = c.name;
+  { const sel = $("sfCond"), cv = c.condition || "Near Mint";
+    if (![...sel.options].some(o => o.value === cv || o.text === cv)){ const op = document.createElement("option"); op.textContent = cv; sel.appendChild(op); }
+    sel.value = cv; }
   $("sfBuyQty").value = 1; $("sfBuyPrice").value = "";
   $("sfQr").innerHTML = QR.svg(cardUrl(c));
   sfMsg("", true);
@@ -1561,12 +1640,12 @@ function reopen(nc, msg){
   if (nc){ openModal(nc); sfMsg(msg, true); }
   else { sfMsg(msg, true); }
 }
-function curFields(){ return { set: $("sfSet").value.trim(), number: $("sfNumber").value.trim(), name: $("sfName").value.trim() }; }
+function curFields(){ return { set: $("sfSet").value.trim(), number: $("sfNumber").value.trim(), name: $("sfName").value.trim(), cond: $("sfCond").value }; }
 function matchOf(c){ const o = c.orig || c; return { matchSet: o.set, matchNumber: o.number, matchName: o.name }; }
 
 $("sfPinBtn").addEventListener("click", () => {
   if ($("sfPin").value.trim() === getPin()){
-    adminUnlocked = true; try { sessionStorage.setItem(STAFF_KEY, "1"); } catch(e){}
+    adminUnlocked = true; updateScanBtn(); try { sessionStorage.setItem(STAFF_KEY, "1"); } catch(e){}
     $("sfPin").value = ""; $("sfPinMsg").textContent = ""; renderStaffPanel();
   } else { $("sfPinMsg").textContent = "Onjuiste code."; }
 });
@@ -1586,6 +1665,7 @@ $("sfSave").addEventListener("click", () => staffRun("sfSave", async () => {
   const payload = Object.assign({ action: "update", set: f.set, number: f.number, name: f.name }, matchOf(c));
   if (!isNaN(qty)) payload.qty = qty;
   if (vkp !== null) payload.vkp = vkp;
+  if (f.cond) payload.cond = f.cond;
   const j = await apiCall(payload);
   reopen(afterWrite(c, j, f), "Opgeslagen in de sheet ✓");
 }));
@@ -1692,6 +1772,7 @@ $("apiSaveBtn").addEventListener("click", () => {
   const v = $("apiSecret").value.trim(), m = $("apiMsg");
   if (!v){ m.className = "sf-msg err"; m.textContent = "Vul de sleutel in."; return; }
   try { localStorage.setItem(API_SECRET_KEY, v); } catch(e){}
+  updateScanBtn();
   $("apiSecret").value = ""; m.className = "sf-msg ok"; m.textContent = "Sleutel opgeslagen op dit toestel ✓";
 });
 $("dedupeBtn").addEventListener("click", async () => {
@@ -1713,6 +1794,360 @@ $("apiTestBtn").addEventListener("click", async () => {
   } catch(e){ m.className = "sf-msg err"; m.textContent = "Geen verbinding met het script."; }
 });
 
+
+/* ==========================================================
+   COLLECTIES: SLABS + SEALED
+   ========================================================== */
+const COLL_CACHE_KEY = "pocketdrop_collections_v1";
+const COLL_DEFS = {
+  Slabs: {
+    title: "Slabs", unit: "slab", unitPl: "slabs",
+    keys: ["card", "set", "number", "grading", "grade"],
+    name: i => i.card || "", line: i => i.set || "",
+    tag: i => [i.grading, i.grade].filter(Boolean).join(" "),
+    details: [["Set", "set"], ["Nummer", "number"], ["Grading", "grading"], ["Grade", "grade"]],
+    icon: '<svg class="coll-icon" viewBox="0 0 100 100"><rect x="22" y="6" width="56" height="88" rx="7" fill="#fff" stroke="#0B67A7" stroke-width="3.5"/><rect x="28" y="12" width="44" height="16" rx="3" fill="#FDDC00" stroke="#0B67A7" stroke-width="2"/><rect x="32" y="33" width="36" height="52" rx="3" fill="#CBE7F6" stroke="#0B67A7" stroke-width="2"/><circle cx="50" cy="52" r="8" fill="#7BCFF3"/><rect x="36" y="68" width="28" height="4" rx="2" fill="#fff"/></svg>'
+  },
+  Sealed: {
+    title: "Sealed", unit: "product", unitPl: "producten",
+    keys: ["product", "set"],
+    name: i => i.product || "", line: i => i.set || "",
+    tag: i => "",
+    details: [["Set", "set"]],
+    icon: '<svg class="coll-icon" viewBox="0 0 100 100"><rect x="12" y="30" width="76" height="56" rx="6" fill="#7BCFF3" stroke="#0B67A7" stroke-width="3.5"/><path d="M12 42h76" stroke="#0B67A7" stroke-width="3"/><path d="M12 30l12-14h52l12 14z" fill="#FDDC00" stroke="#0B67A7" stroke-width="3.5" stroke-linejoin="round"/><circle cx="50" cy="64" r="11" fill="#fff" stroke="#0B67A7" stroke-width="3"/><path d="M39 64h22" stroke="#0B67A7" stroke-width="3"/></svg>'
+  }
+};
+let collections = { Slabs: [], Sealed: [] };
+try { collections = Object.assign(collections, JSON.parse(localStorage.getItem(COLL_CACHE_KEY) || "{}")); } catch(e){}
+let activeColl = null;
+let activeItem = null;
+
+function itemQty(i){ return toNumber(i.aantal); }
+function itemPrice(i){ return toNumber(i.verkoopprijs); }
+function collHits(){
+  const out = [];
+  Object.keys(COLL_DEFS).forEach(name => { collVisible(name, true).forEach(item => out.push({ name, item })); });
+  return out;
+}
+function buildItemTile(name, item){
+  const d = COLL_DEFS[name];
+  const q = itemQty(item);
+  const tile = document.createElement("div");
+  tile.className = "tile";
+  tile.innerHTML = `
+    <div class="foil"></div>
+    <div class="img-wrap">
+      ${placeholderSVG}
+      <img alt="${escapeHTML(d.name(item))}">
+      ${q !== null ? `<span class="stock-badge">×${q}</span>` : ``}
+    </div>
+    <div class="info">
+      <div class="set-line">${escapeHTML(d.title)}${d.line(item) ? " · " + escapeHTML(d.line(item)) : ""}</div>
+      <div class="name-line">${escapeHTML(d.name(item))}</div>
+      <div class="price-row">
+        <span class="price-tag">${fmtPrice(itemPrice(item))}</span>
+        <span class="num-tag">${escapeHTML(d.tag(item))}</span>
+      </div>
+    </div>`;
+  loadItemImage(name, item, tile.querySelector("img"), "low");
+  tile.addEventListener("click", () => openItem(name, item));
+  return tile;
+}
+function collVisible(name, applySearch){
+  const q = applySearch ? $("searchInput").value.trim().toLowerCase().split(/\s+/).filter(Boolean) : [];
+  return (collections[name] || []).filter(i => {
+    const n = itemQty(i);
+    if (n !== null && n <= 0) return false;
+    if (!q.length) return true;
+    const hay = Object.keys(i).filter(k => k !== "foto").map(k => i[k]).join(" ").toLowerCase();
+    return q.every(w => hay.includes(w));
+  });
+}
+async function fetchCollections(){
+  let changed = false;
+  await Promise.all(Object.keys(COLL_DEFS).map(async name => {
+    try {
+      const r = await fetch(API_URL + "?action=collection&name=" + name, { cache: "no-store" });
+      const j = await r.json();
+      if (!j.ok || !Array.isArray(j.items)) return;
+      if (JSON.stringify(j.items) !== JSON.stringify(collections[name])){ collections[name] = j.items; changed = true; }
+    } catch(e){}
+  }));
+  if (changed){
+    try { localStorage.setItem(COLL_CACHE_KEY, JSON.stringify(collections)); } catch(e){}
+    if (currentView === "home") renderHome();
+    if (currentView === "coll") renderColl();
+  }
+}
+function renderCollectionTiles(grid){
+  if (!grid) return;
+  Object.keys(COLL_DEFS).forEach(name => {
+    const d = COLL_DEFS[name];
+    const n = collVisible(name, false).length;
+    if (n === 0) return;
+    const tile = document.createElement("div");
+    tile.className = "set-tile";
+    const lov = findSetLogoOverride(d.title);
+    tile.innerHTML = `
+      <div class="logo-wrap">${lov ? `<img src="${lov.url}" alt="${escapeHTML(d.title)}" class="loaded" style="max-height:90%;max-width:90%;object-fit:contain;opacity:1;">` : d.icon}</div>
+      <div class="set-info">
+        <div class="set-name">${escapeHTML(d.title)}</div>
+        <div class="set-count">${n} ${n === 1 ? d.unit : d.unitPl}</div>
+      </div>`;
+    tile.addEventListener("click", () => { activeColl = name; currentView = "coll"; $("searchInput").value = ""; renderApp(); });
+    grid.appendChild(tile);
+  });
+}
+function loadItemImage(name, item, img, size){
+  img.onload = () => img.classList.add("loaded");
+  if (item.foto){ img.src = item.foto; return; }
+  if (name === "Slabs" && item.card){
+    resolveImage(item.card, item.set || "", item.number || "").then(base => { if (base) img.src = imgSrc(base, size); });
+  }
+}
+function renderColl(){
+  const name = activeColl;
+  if (!name) return;
+  const d = COLL_DEFS[name];
+  const list = collVisible(name, true).sort((a, b) => d.name(a).localeCompare(d.name(b)));
+  $("collCount").textContent = d.title + " · " + list.length + " " + (list.length === 1 ? d.unit : d.unitPl);
+  const grid = $("collItems");
+  grid.innerHTML = "";
+  if (!list.length){
+    grid.innerHTML = `<div class="empty-state"><div class="icon">🔎</div><h3>Niets gevonden</h3><p>Er zijn momenteel geen items in deze collectie.</p></div>`;
+    return;
+  }
+  list.forEach(item => { grid.appendChild(buildItemTile(name, item)); });
+}
+$("collBackBtn").addEventListener("click", () => { $("searchInput").value = ""; goHome(); });
+
+function itemMatch(name, item){
+  const m = {};
+  COLL_DEFS[name].keys.forEach(k => { m[k] = item[k] || ""; });
+  return m;
+}
+function openItem(name, item){
+  activeItem = { name, item };
+  const d = COLL_DEFS[name];
+  $("itemSet").textContent = d.line(item);
+  $("itemName").textContent = d.name(item);
+  $("itemPrice").textContent = fmtPrice(itemPrice(item));
+  const q = itemQty(item);
+  const cells = d.details.map(([label, key]) => [label, item[key] || "—"]);
+  cells.push(["Status", q === null ? "—" : (q <= 0 ? "Uitverkocht" : q + "× op voorraad")]);
+  $("itemDetails").innerHTML = cells.map(([l, v]) => `<div class="detail-cell"><div class="label">${escapeHTML(l)}</div><div class="value">${escapeHTML(String(v))}</div></div>`).join("");
+  const wrap = $("itemImg");
+  wrap.innerHTML = placeholderSVG;
+  const img = document.createElement("img");
+  img.alt = d.name(item);
+  img.style.display = "none";
+  img.onload = () => { wrap.innerHTML = ""; img.style.display = ""; wrap.appendChild(img); };
+  loadItemImage(name, item, img, "high");
+  $("itemStaff").style.display = adminUnlocked ? "" : "none";
+  $("itemLockNote").style.display = adminUnlocked ? "none" : "";
+  $("itQty").value = q === null ? "" : q;
+  $("itPrice").value = itemPrice(item) === null ? "" : String(itemPrice(item)).replace(".", ",");
+  $("itMsg").textContent = "";
+  $("itemBackdrop").classList.add("show");
+}
+$("closeItem").addEventListener("click", () => $("itemBackdrop").classList.remove("show"));
+$("itemBackdrop").addEventListener("click", (e) => { if (e.target.id === "itemBackdrop") e.currentTarget.classList.remove("show"); });
+function itMsg(t, ok){ const m = $("itMsg"); m.textContent = t; m.className = "sf-msg " + (ok ? "ok" : "err"); }
+async function itemRun(btnId, fn){
+  const b = $(btnId); b.disabled = true; itMsg("Bezig…", true);
+  try { await fn(); } catch(e){ itMsg(e.message || String(e), false); }
+  b.disabled = false;
+}
+function applyItemResult(j, extra){
+  const { name, item } = activeItem;
+  if (j.qty !== undefined) item.aantal = String(j.qty);
+  if (extra) Object.assign(item, extra);
+  try { localStorage.setItem(COLL_CACHE_KEY, JSON.stringify(collections)); } catch(e){}
+  renderColl();
+  openItem(name, item);
+}
+$("itSell").addEventListener("click", () => itemRun("itSell", async () => {
+  const { name, item } = activeItem;
+  const j = await apiCall({ action: "itemadjust", sheet: name, match: itemMatch(name, item), delta: -1 });
+  applyItemResult(j); itMsg("Verkocht ✓ Nieuw aantal: " + j.qty, true);
+}));
+$("itRestock").addEventListener("click", () => itemRun("itRestock", async () => {
+  const { name, item } = activeItem;
+  const j = await apiCall({ action: "itemadjust", sheet: name, match: itemMatch(name, item), delta: 1 });
+  applyItemResult(j); itMsg("Bijgevuld ✓ Nieuw aantal: " + j.qty, true);
+}));
+$("itSave").addEventListener("click", () => itemRun("itSave", async () => {
+  const { name, item } = activeItem;
+  const values = {};
+  const q = parseInt($("itQty").value, 10), p = parseMoney($("itPrice").value);
+  if (!isNaN(q)) values.Aantal = q;
+  if (p !== null) values.Verkoopprijs = p;
+  const j = await apiCall({ action: "itemupdate", sheet: name, match: itemMatch(name, item), values });
+  applyItemResult(j, p !== null ? { verkoopprijs: String(p) } : null); itMsg("Opgeslagen in de sheet ✓", true);
+}));
+
+function updateItemForm(){
+  const slab = $("iType").value === "Slabs";
+  $("iSlabRow").style.display = slab ? "" : "none";
+  $("iNameLabel").textContent = slab ? "Kaartnaam" : "Productnaam";
+}
+$("iType").addEventListener("change", updateItemForm);
+$("itemForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const m = $("iMsg"); m.className = "sf-msg"; m.textContent = "Bezig…";
+  const type = $("iType").value;
+  const values = { Set: $("iSet").value.trim(), Aantal: parseInt($("iQty").value, 10) || 1 };
+  const p = parseMoney($("iPriceNew").value);
+  if (p !== null) values.Verkoopprijs = p;
+  if ($("iFoto").value.trim()) values.Foto = $("iFoto").value.trim();
+  if (type === "Slabs"){
+    Object.assign(values, { Card: $("iName").value.trim(), Number: $("iNumber").value.trim(), Grading: $("iGrading").value.trim(), Grade: $("iGrade").value.trim() });
+  } else {
+    Object.assign(values, { Product: $("iName").value.trim() });
+  }
+  try {
+    const j = await apiCall({ action: "itemadd", sheet: type, values });
+    m.className = "sf-msg ok";
+    m.textContent = (j.action === "added" ? "Toegevoegd" : "Bestond al, aantal opgehoogd") + " ✓ Aantal: " + j.qty;
+    $("iName").value = ""; $("iNumber").value = ""; $("iGrade").value = ""; $("iPriceNew").value = ""; $("iFoto").value = ""; $("iQty").value = 1;
+    fetchCollections();
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+});
+$("setupBtn").addEventListener("click", async () => {
+  const m = $("setupMsg"); m.className = "sf-msg"; m.textContent = "Bezig…";
+  try {
+    const j = await apiCall({ action: "setup" });
+    if (j.action !== "setup") throw new Error("Het script is nog niet bijgewerkt naar de nieuwste versie.");
+    m.className = "sf-msg ok";
+    m.textContent = (j.addedColumn ? "Kolom Conditie toegevoegd. " : "Kolom Conditie bestond al. ") + j.filled + " kaarten ingevuld met Near Mint. " + (j.created.length ? "Tabbladen aangemaakt: " + j.created.join(", ") + "." : "Tabbladen Slabs en Sealed bestonden al.") + (j.removedType ? " Kolom Type verwijderd uit Sealed." : "");
+    fetchData(false); fetchCollections();
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+});
+
+
+/* ---- kaart scannen (gratis, OCR op het toestel met Tesseract.js) ---- */
+function updateScanBtn(){ $("scanAiBtn").style.display = adminUnlocked || haveSecret() ? "" : "none"; }
+function haveSecret(){ try { return !!localStorage.getItem(API_SECRET_KEY); } catch(e){ return false; } }
+const TESS_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+let tessPromise = null, tessWorker = null;
+function loadTess(){
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (!tessPromise) tessPromise = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = TESS_SRC; sc.onload = () => res(window.Tesseract);
+    sc.onerror = () => { tessPromise = null; rej(new Error("Scanner kon niet geladen worden. Internet nodig bij de eerste scan.")); };
+    document.head.appendChild(sc);
+  });
+  return tessPromise;
+}
+async function getWorker(){
+  const T = await loadTess();
+  if (!tessWorker) tessWorker = await T.createWorker("eng");
+  return tessWorker;
+}
+function photoToCanvas(file, maxSide){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); resolve(c);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Foto kon niet gelezen worden.")); };
+    img.src = url;
+  });
+}
+function cropCanvas(c, y0, y1){
+  const h = Math.round(c.height * (y1 - y0)), o = document.createElement("canvas");
+  o.width = c.width; o.height = h;
+  const x = o.getContext("2d");
+  x.filter = "grayscale(1) contrast(1.4)";
+  x.drawImage(c, 0, Math.round(c.height * y0), c.width, h, 0, 0, c.width, h);
+  return o;
+}
+function pickPhoto(){
+  return new Promise(resolve => {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "image/*"; inp.setAttribute("capture", "environment");
+    inp.onchange = () => resolve(inp.files && inp.files[0] || null);
+    inp.click();
+  });
+}
+async function scanCardAI(){
+  const f = await pickPhoto();
+  if (!f) return null;
+  toast("Kaart wordt gelezen… (eerste keer duurt langer)");
+  const worker = await getWorker();
+  const c = await photoToCanvas(f, 1600);
+  const r1 = await worker.recognize(c);
+  const r2 = await worker.recognize(cropCanvas(c, 0.72, 1));
+  const text = (r1.data.text || "") + "\n" + (r2.data.text || "");
+  const nums = [];
+  let m; const re = /(\d{1,3})\s*[\/7|]\s*(\d{2,3})/g;
+  while ((m = re.exec(text))) nums.push(normKeyPart(m[1]));
+  const promo = text.match(/\b([A-Z]{2,4})\s?-?\s?(\d{2,3})\b/g) || [];
+  promo.forEach(p => nums.push(normKeyPart(p.replace(/[^A-Za-z0-9]/g, "")), normKeyPart(p.replace(/\D/g, ""))));
+  return { text, nums, flat: scanName(text) };
+}
+function scanNum(n){
+  n = String(n || "").trim().toLowerCase().split("/")[0].replace(/\s+/g, "");
+  return normKeyPart(n);
+}
+function scanName(n){ return String(n || "").toLowerCase().replace(/[^a-z0-9]+/g, ""); }
+function findScanned(r){
+  const cands = allCards.map(c => {
+    const nm = scanName(c.name);
+    const nameHit = nm.length >= 3 && r.flat.includes(nm);
+    const cn = scanNum(c.number);
+    const numHit = !!cn && r.nums.includes(cn);
+    return { c, nameHit, numHit, len: nm.length };
+  }).filter(x => x.nameHit || x.numHit);
+  const both = cands.filter(x => x.nameHit && x.numHit);
+  if (both.length) return both.map(x => x.c);
+  const names = cands.filter(x => x.nameHit);
+  if (names.length){
+    // langste naam wint (bv. "Charizard EX" boven "Charizard")
+    const mx = Math.max.apply(null, names.map(x => x.len));
+    return names.filter(x => x.len === mx).map(x => x.c);
+  }
+  return [];
+}
+async function scanAndOpen(){
+  try {
+    const r = await scanCardAI();
+    if (!r) return;
+    const hits = findScanned(r);
+    if (hits.length === 1){ toast("Herkend: " + hits[0].name); openModal(hits[0]); return; }
+    if (hits.length > 1){
+      $("searchInput").value = hits[0].name; render();
+      toast("Meerdere versies van " + hits[0].name + ", kies de juiste."); return;
+    }
+    toast("Kaart niet herkend in de collectie. Probeer opnieuw (meer licht, kaart vlak en vol in beeld).");
+  } catch(err){ toast(err.message || String(err)); }
+}
+async function scanIntoPurchase(){
+  const m = $("pMsg"); m.className = "sf-msg"; m.textContent = "Kaart wordt gelezen…";
+  try {
+    const r = await scanCardAI();
+    if (!r){ m.textContent = ""; return; }
+    const hits = findScanned(r);
+    if (hits.length >= 1){
+      const c = hits[0];
+      $("pSet").value = c.set; $("pNumber").value = c.number; $("pName").value = c.name;
+      if (c.vkp !== null && c.vkp !== undefined) $("pVkp").value = String(c.vkp).replace(".", ",");
+      m.className = "sf-msg ok"; m.textContent = "Herkend in de collectie: " + c.name + " (" + c.set + " " + c.number + ")" + (hits.length > 1 ? " – er zijn meerdere versies, controleer de set." : "");
+    } else {
+      if (r.nums.length) $("pNumber").value = r.nums[0];
+      m.className = "sf-msg err"; m.textContent = "Kaart staat nog niet in de collectie: vul set en naam zelf in" + (r.nums.length ? " (nummer " + r.nums[0] + " gelezen)." : ".");
+    }
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+}
+$("scanAiBtn").addEventListener("click", scanAndOpen);
+$("pScanBtn").addEventListener("click", scanIntoPurchase);
+updateScanBtn();
+
 /* ==========================================================
    EVENTS + INIT
    ========================================================== */
@@ -1725,6 +2160,7 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
     document.getElementById("chipRow").style.display = "";
   }
   if (currentView === "browse") render();
+  if (currentView === "coll") renderColl();
 });
 document.getElementById("sortSelect").addEventListener("change", render);
 document.getElementById("refreshBtn").addEventListener("click", () => fetchData(false));
@@ -1771,6 +2207,7 @@ function showAdminContent(){
   renderEditedList();
   renderQrSetSelect();
   renderSetLogoList();
+  updateItemForm();
 }
 
 document.getElementById("adminBtn").addEventListener("click", openAdmin);
@@ -1786,7 +2223,7 @@ document.getElementById("pinInput").addEventListener("keydown", (e) => {
 function checkPin(){
   const val = document.getElementById("pinInput").value.trim();
   if (val === getPin()){
-    adminUnlocked = true;
+    adminUnlocked = true; updateScanBtn();
     try { sessionStorage.setItem(STAFF_KEY, "1"); } catch(e){}
     showAdminContent();
   } else {
@@ -1798,7 +2235,7 @@ function checkPin(){
 
 function renderSetList(){
   const dl = document.getElementById("setList");
-  dl.innerHTML = uniqueSets().filter(s => s !== "Alle").map(s => `<option value="${escapeHTML(s)}">`).join("");
+  dl.innerHTML = ["Slabs", "Sealed"].concat(uniqueSets().filter(s => s !== "Alle")).map(s => `<option value="${escapeHTML(s)}">`).join("");
 }
 
 function resetManualForm(){
