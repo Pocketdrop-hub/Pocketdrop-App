@@ -164,6 +164,8 @@
   }
   .meta-row button:active{ transform:translateY(1px); }
 
+  .era-head{ grid-column:1/-1; margin:14px 0 2px; padding:8px 14px; border-radius:12px; background:linear-gradient(90deg,var(--blue,#1E88E5),#42A5F5); color:#fff; font-family:var(--font-display); font-weight:800; font-size:17px; display:flex; justify-content:space-between; align-items:baseline; }
+  .era-head small{ font-weight:700; font-size:12px; opacity:.9; }
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(190px,1fr));
@@ -510,7 +512,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v25</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v26</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1216,6 +1218,27 @@ function setsSummary(){
     .sort((a,b) => a.set.localeCompare(b.set));
 }
 
+/* ---- tijdperken (op releasedatum van de set) ---- */
+const ERAS = [
+  ["2025-09-01", "Mega Evolution"],
+  ["2023-03-01", "Scarlet & Violet"],
+  ["2019-11-10", "Sword & Shield"],
+  ["2016-11-01", "Sun & Moon"],
+  ["2014-01-01", "XY"],
+  ["2011-03-01", "Black & White"],
+  ["2010-01-01", "HeartGold & SoulSilver"],
+  ["2009-01-01", "Platinum"],
+  ["2007-04-01", "Diamond & Pearl"],
+  ["2003-04-01", "EX"],
+  ["2002-08-01", "e-Card"],
+  ["0000-00-00", "Klassiek (Base t/m Neo)"]
+];
+function eraOf(date){
+  if (!date) return "Overige";
+  const d = String(date).slice(0, 10);
+  for (const [from, name] of ERAS){ if (d >= from) return name; }
+  return "Overige";
+}
 let homeRenderToken = 0;
 async function renderHome(){
   const myToken = ++homeRenderToken;
@@ -1249,7 +1272,21 @@ async function renderHome(){
 
   grid.innerHTML = "";
   renderCollectionTiles(grid);
-  ordered.forEach(({ set, count, logo }) => {
+  if (grid.children.length){
+    const h = document.createElement("div"); h.className = "era-head"; h.innerHTML = "<span>Slabs &amp; Sealed</span>";
+    grid.insertBefore(h, grid.firstChild);
+  }
+  const eraCount = {};
+  ordered.forEach(o => { const e = eraOf(o.releaseDate); eraCount[e] = (eraCount[e] || 0) + 1; });
+  let lastEra = null;
+  ordered.forEach(({ set, count, logo, releaseDate }) => {
+    const era = eraOf(releaseDate);
+    if (era !== lastEra){
+      lastEra = era;
+      const h = document.createElement("div"); h.className = "era-head";
+      h.innerHTML = `<span>${escapeHTML(era)}</span><small>${eraCount[era]} ${eraCount[era] === 1 ? "set" : "sets"}</small>`;
+      grid.appendChild(h);
+    }
     const tile = document.createElement("div");
     tile.className = "set-tile";
     tile.innerHTML = `
