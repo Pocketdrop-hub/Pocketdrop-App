@@ -471,13 +471,6 @@
       <input id="searchInput" type="text" placeholder="Zoek op naam of nummer…" autocomplete="off">
     </div>
     <button id="scanAiBtn" type="button" class="btn btn-yellow" style="display:none;padding:0 14px;white-space:nowrap;" title="Kaart scannen met de camera">📷 Scan kaart</button>
-    <select id="sortSelect">
-      <option value="number" selected>Nummering</option>
-      <option value="name">Naam A–Z</option>
-      <option value="price-asc">Prijs laag–hoog</option>
-      <option value="price-desc">Prijs hoog–laag</option>
-      <option value="set">Set</option>
-    </select>
   </div>
   <div class="chip-row" id="chipRow"></div>
   <svg class="wave-divider" viewBox="0 0 1200 34" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -512,7 +505,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v28</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v29</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1148,7 +1141,7 @@ function cardMatches(c, q){
 
 function filteredSorted(){
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
-  const sort = document.getElementById("sortSelect").value;
+  const sort = "number";
   let list = shopCards().filter(c => {
     const matchSet = q || activeSet === "Alle" || setOf(c) === activeSet;
     const matchQuery = cardMatches(c, q);
@@ -2442,7 +2435,6 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
   if (currentView === "browse") render();
   if (currentView === "coll") renderColl();
 });
-document.getElementById("sortSelect").addEventListener("change", render);
 document.getElementById("refreshBtn").addEventListener("click", () => fetchData(false));
 document.getElementById("backToSetsBtn").addEventListener("click", goHome);
 document.getElementById("brandHome").addEventListener("click", goHome);
