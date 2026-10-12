@@ -510,7 +510,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v33</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v34</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -828,6 +828,7 @@
           <button class="btn btn-ghost" id="itRestock" type="button">Bijvullen (+1)</button>
         </div>
         <button class="btn btn-yellow" id="itCart" type="button" style="width:100%;margin-top:8px;">🛒 In mandje</button>
+        <button class="btn btn-ghost" id="itEbay" type="button" style="width:100%;margin-top:8px;display:none;">🔎 Laatst verkocht op eBay</button>
         <div class="field-row" style="margin-top:12px;">
           <div class="field"><label>Aantal</label><input id="itQty" type="number" min="0" step="1"></div>
           <div class="field"><label>Verkoopprijs (€)</label><input id="itPrice" type="text" inputmode="decimal"></div>
@@ -2071,6 +2072,7 @@ function openItem(name, item){
   img.onload = () => { wrap.innerHTML = ""; img.style.display = ""; wrap.appendChild(img); };
   loadItemImage(name, item, img, "high");
   $("itemStaff").style.display = adminUnlocked ? "" : "none";
+  $("itEbay").style.display = name === "Slabs" ? "" : "none";
   $("itQty").value = q === null ? "" : q;
   $("itPrice").value = itemPrice(item) === null ? "" : String(itemPrice(item)).replace(".", ",");
   $("itMsg").textContent = "";
@@ -2497,6 +2499,13 @@ $("staffLogout").addEventListener("click", () => {
   $("adminBackdrop").classList.remove("show");
   document.getElementById("pinGate").style.display = ""; document.getElementById("adminContent").style.display = "none";
   toast("Uitgelogd.");
+});
+
+$("itEbay").addEventListener("click", () => {
+  if (!activeItem || activeItem.name !== "Slabs") return;
+  const it = activeItem.item;
+  const q = [it.card, it.set, it.number, it.grading, it.grade].map(x => String(x || "").trim()).filter(Boolean).join(" ");
+  window.open("https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(q) + "&LH_Sold=1&LH_Complete=1&_sop=13", "_blank", "noopener");
 });
 /* ==========================================================
    EVENTS + INIT
