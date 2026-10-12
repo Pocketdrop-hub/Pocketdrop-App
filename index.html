@@ -164,6 +164,7 @@
   }
   .meta-row button:active{ transform:translateY(1px); }
 
+
   .era-head{ grid-column:1/-1; margin:14px 0 2px; padding:8px 14px; border-radius:12px; background:linear-gradient(90deg,var(--blue,#1E88E5),#42A5F5); color:#fff; font-family:'Inter',system-ui,sans-serif; font-weight:800; font-size:17px; letter-spacing:.2px; display:flex; justify-content:space-between; align-items:baseline; }
   .era-head small{ font-weight:700; font-size:12px; opacity:.9; }
   .grid{
@@ -199,8 +200,7 @@
     overflow:hidden;
   }
   .tile .img-wrap img{
-    width:100%; height:100%; object-fit:contain;
-    opacity:0; transition:opacity .25s ease;
+    opacity:0;
   }
   .tile .img-wrap img.loaded{ opacity:1; }
   .placeholder-art{
@@ -457,6 +457,65 @@
   }
   .section-title{ font-family:var(--font-display); font-weight:800; font-size:20px; color:var(--water-deep); margin:18px 4px 10px; }
   .coll-icon{ width:92px; height:92px; }
+  /* ---------- Welkomstbanner ---------- */
+  .hero{ position:relative; overflow:hidden; margin:4px 0 6px; padding:26px 24px 24px; border-radius:22px;
+    background:linear-gradient(135deg,#0B6BAE 0%,#1E9BE0 55%,#5CC3F3 100%); color:#fff; box-shadow:var(--shadow-lg); }
+  .hero::before{ content:""; position:absolute; right:-40px; bottom:-60px; width:260px; height:260px; border-radius:50%; background:rgba(255,255,255,.12); }
+  .hero::after{ content:""; position:absolute; right:60px; top:-70px; width:170px; height:170px; border-radius:50%; background:rgba(255,203,5,.22); }
+  .hero h1{ font-family:var(--font-display); font-weight:800; font-size:30px; line-height:1.1; margin:0 0 8px; text-shadow:0 2px 0 rgba(0,40,80,.25); position:relative; z-index:1; }
+  .hero h1 span{ color:var(--yellow,#FFCB05); }
+  .hero p{ margin:0; font-size:15.5px; font-weight:600; opacity:.96; max-width:520px; position:relative; z-index:1; }
+  .hero .hero-chip{ display:inline-block; margin-top:14px; padding:8px 14px; border-radius:999px; background:var(--yellow,#FFCB05); color:#10181C; font-weight:800; font-size:13.5px; position:relative; z-index:1; }
+  .hero .hero-cards{ position:absolute; right:28px; top:50%; transform:translateY(-50%); z-index:1; display:flex; }
+  .hero .hero-cards i{ display:block; width:62px; height:86px; border-radius:8px; margin-left:-22px; border:3px solid #fff; box-shadow:0 8px 16px rgba(0,30,60,.35);
+    background:linear-gradient(160deg,#FFE066,#FFCB05 45%,#FF9F1C); transform:rotate(-12deg); }
+  .hero .hero-cards i:nth-child(2){ background:linear-gradient(160deg,#9FE3FF,#3DB4F2); transform:rotate(-2deg) translateY(-6px); }
+  .hero .hero-cards i:nth-child(3){ background:linear-gradient(160deg,#FFB3C1,#F0466B); transform:rotate(9deg); }
+  .hero{ padding-right:210px; min-height:176px; }
+  .hero .hero-photo{ position:absolute; right:22px; top:50%; transform:translateY(-50%); width:160px; height:160px; border-radius:50%; border:4px solid #fff; box-shadow:0 10px 22px rgba(0,30,60,.4); z-index:1; background:#fff; }
+  @media (max-width:560px){ .hero{ padding-right:24px; padding-top:150px; } .hero .hero-photo{ top:16px; right:50%; transform:translateX(50%); width:110px; height:110px; } .hero h1{ font-size:25px; } }
+
+  /* ---------- Animaties ---------- */
+  @keyframes rise{ from{ opacity:0; transform:translateY(16px) scale(.97); } to{ opacity:1; transform:none; } }
+  @keyframes shine{ 0%{ transform:translateX(-130%) skewX(-18deg); } 55%,100%{ transform:translateX(230%) skewX(-18deg); } }
+  @keyframes holoShift{ 0%{ background-position:0% 50%; } 100%{ background-position:200% 50%; } }
+  @media (prefers-reduced-motion:no-preference){
+    .grid > .tile, .grid > .set-tile{ animation:rise .45s cubic-bezier(.2,.8,.25,1) both; animation-delay:calc(var(--i,0) * 35ms); }
+    .hero{ animation:rise .5s ease both; }
+  }
+  .tile, .set-tile{ transition:transform .22s cubic-bezier(.2,.8,.25,1), box-shadow .22s ease; will-change:transform; }
+  @media (hover:hover){
+    .tile:hover{ transform:translateY(-6px) rotate(-.6deg); box-shadow:0 16px 30px rgba(11,60,90,.28); }
+    .tile:hover .img-wrap img.loaded{ transform:scale(1.04); }
+    .set-tile:hover{ transform:translateY(-4px); }
+  }
+  .tile:active, .set-tile:active{ transform:scale(.97); }
+  .modal{ transition:transform .28s cubic-bezier(.2,.9,.3,1.1), opacity .2s ease; }
+  .modal-backdrop .modal{ transform:translateY(24px) scale(.97); }
+  .modal-backdrop.show .modal{ transform:none; }
+
+  /* ---------- Topkaarten (dure kaarten) ---------- */
+  .tile.rare-gold{ border-color:#FFCB05; box-shadow:0 0 0 2px rgba(255,203,5,.9), 0 8px 22px rgba(255,190,0,.38); }
+  .tile.rare-holo{ border:2px solid transparent;
+    background:linear-gradient(#fff,#fff) padding-box, linear-gradient(110deg,#ff7eb3,#ffd166,#6ee7b7,#6ec5ff,#c084fc,#ff7eb3) border-box;
+    background-size:100% 100%, 300% 100%; animation:rise .45s both, holoShift 6s linear infinite; box-shadow:0 10px 26px rgba(120,90,255,.35); }
+  .tile.rare-gold .img-wrap::after, .tile.rare-holo .img-wrap::after{ content:""; position:absolute; top:0; bottom:0; left:0; width:45%;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent); animation:shine 3.8s ease-in-out infinite; pointer-events:none; }
+  .rare-badge{ position:absolute; top:8px; left:8px; z-index:2; font-size:10.5px; font-weight:800; padding:4px 9px; border-radius:999px; color:#10181C;
+    background:linear-gradient(135deg,#FFE27A,#FFC107); box-shadow:0 2px 6px rgba(0,0,0,.25); letter-spacing:.3px; }
+  .tile.rare-holo .rare-badge{ background:linear-gradient(135deg,#ffd6f0,#c9b6ff,#b6ecff); }
+  @media (prefers-reduced-motion:reduce){ .tile.rare-holo{ animation:none; } .tile .img-wrap::after{ animation:none !important; display:none; } }
+
+  /* ---------- Uniforme kaartfoto's ---------- */
+  .tile .img-wrap{ background:radial-gradient(120% 90% at 50% 20%,#F4FBFF 0%,#D6EDFA 60%,#C3E3F6 100%); }
+  .tile .img-wrap img, .modal-img img{ width:88%; height:88%; object-fit:contain; border-radius:6px;
+    filter:drop-shadow(0 8px 10px rgba(11,60,90,.32)); transition:opacity .25s ease, transform .3s ease; }
+  .tile .img-wrap img{ position:absolute; inset:0; margin:auto; }
+  .tile .img-wrap:has(img.loaded) .placeholder-art{ display:none; }
+  .modal-img{ background:radial-gradient(120% 90% at 50% 20%,#F4FBFF 0%,#D6EDFA 60%,#C3E3F6 100%); }
+  .modal-img img{ width:92%; height:92%; }
+
+
 </style>
 </head>
 <body>
@@ -486,6 +545,12 @@
 
 <main>
   <div id="homeView">
+    <div class="hero" id="heroBanner">
+      <img class="hero-photo" src="hero.png" alt="Pocketdrop – Pa & Ma" width="160" height="160">
+      <h1>Ontdek onze <span>volledige</span> catalogus</h1>
+      <p>Zoek je favoriete Pokémon. Niet gevonden wat je zocht? Roep dan: &ldquo;Koent djé mich helpen alstembliejft copain?&rdquo;</p>
+      <div class="hero-chip" id="heroInfo" style="display:none;"></div>
+    </div>
     <div class="meta-row">
       <span id="setResultCount">Sets laden…</span>
     </div>
@@ -510,7 +575,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v35</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v37</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -828,7 +893,6 @@
           <button class="btn btn-ghost" id="itRestock" type="button">Bijvullen (+1)</button>
         </div>
         <button class="btn btn-yellow" id="itCart" type="button" style="width:100%;margin-top:8px;">🛒 In mandje</button>
-        <button class="btn btn-ghost" id="itEbay" type="button" style="width:100%;margin-top:8px;display:none;">🔎 Laatst verkocht (eBay-verkopen)</button>
         <div class="field-row" style="margin-top:12px;">
           <div class="field"><label>Aantal</label><input id="itQty" type="number" min="0" step="1"></div>
           <div class="field"><label>Verkoopprijs (€)</label><input id="itPrice" type="text" inputmode="decimal"></div>
@@ -962,6 +1026,9 @@ const IMG_CACHE_KEY = "pocketdrop_imgcache_v5";
 const MANUAL_CARDS_KEY = "pocketdrop_manual_cards_v1";
 const PIN_KEY = "pocketdrop_admin_pin_v1";
 const DEFAULT_PIN = "3010";
+const FAIR_INFO = "";            // bv. "Volgende beurs: za 15 november · Antwerpen" (leeg = niet tonen)
+const RARE_GOLD_FROM = 20;       // vanaf deze verkoopprijs (€) krijgt een kaart een gouden gloed
+const RARE_HOLO_FROM = 75;       // vanaf deze verkoopprijs (€) een regenboog-gloed
 const TCGDEX_API = "https://api.tcgdex.net/v2/en/cards";
 const TCGDEX_SETS_API = "https://api.tcgdex.net/v2/en/sets";
 const SET_LOGO_CACHE_KEY = "pocketdrop_setlogocache_v5";
@@ -1231,6 +1298,7 @@ function renderApp(){
   browse.style.display = currentView === "browse" ? "" : "none";
   collV.style.display = currentView === "coll" ? "" : "none";
   chipRow.style.display = currentView === "browse" ? "" : "none";
+  { const hi = document.getElementById("heroInfo"); if (FAIR_INFO){ hi.textContent = FAIR_INFO; hi.style.display = ""; } }
   if (currentView === "home"){ renderHome(); }
   else if (currentView === "coll"){ renderColl(); }
   else { render(); }
@@ -1338,6 +1406,7 @@ async function renderHome(){
     }
     const tile = document.createElement("div");
     tile.className = "set-tile";
+    tile.style.setProperty("--i", Math.min(grid.children.length, 14));
     tile.innerHTML = `
       <div class="logo-wrap">
         <span class="logo-fallback">${escapeHTML(set)}</span>
@@ -1392,6 +1461,10 @@ function render(){
   list.forEach((card, i) => {
     const tile = document.createElement("div");
     tile.className = "tile";
+    tile.style.setProperty("--i", Math.min(i, 14));
+    const rare = !(card.qty !== null && card.qty <= 0) && card.vkp !== null && card.vkp !== undefined
+      ? (card.vkp >= RARE_HOLO_FROM ? "holo" : (card.vkp >= RARE_GOLD_FROM ? "gold" : "")) : "";
+    if (rare) tile.classList.add("rare-" + rare);
     tile.dataset.index = allCards.indexOf(card);
     const outOfStock = card.qty !== null && card.qty <= 0;
     tile.innerHTML = `
@@ -1399,6 +1472,7 @@ function render(){
       <div class="img-wrap">
         ${placeholderSVG}
         <img data-name="${encodeURIComponent(card.name)}" data-set="${encodeURIComponent(card.set)}" data-number="${encodeURIComponent(card.number)}">
+        ${rare ? `<span class="rare-badge">★ Topkaart</span>` : ``}
         ${card.manual ? `<span class="manual-tag">Handmatig</span>` : ``}
         ${card.qty !== null ? `<span class="stock-badge ${outOfStock?'out':''}">${outOfStock?'Uitverkocht':'×' + card.qty}</span>` : ``}
       </div>
@@ -2072,7 +2146,6 @@ function openItem(name, item){
   img.onload = () => { wrap.innerHTML = ""; img.style.display = ""; wrap.appendChild(img); };
   loadItemImage(name, item, img, "high");
   $("itemStaff").style.display = adminUnlocked ? "" : "none";
-  $("itEbay").style.display = name === "Slabs" ? "" : "none";
   $("itQty").value = q === null ? "" : q;
   $("itPrice").value = itemPrice(item) === null ? "" : String(itemPrice(item)).replace(".", ",");
   $("itMsg").textContent = "";
@@ -2501,19 +2574,6 @@ $("staffLogout").addEventListener("click", () => {
   toast("Uitgelogd.");
 });
 
-$("itEbay").addEventListener("click", () => {
-  if (!activeItem || activeItem.name !== "Slabs") return;
-  const it = activeItem.item;
-  const q = [it.card, it.set, it.number, it.grading, it.grade].map(x => String(x || "").trim()).filter(Boolean).join(" ");
-  // 130point toont recente eBay-verkopen zonder dat je op eBay moet inloggen; de zoektekst wordt gekopieerd om te plakken.
-  let copied = false;
-  try { if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(q); copied = true; } } catch(e){}
-  if (!copied){
-    try { const t = document.createElement("textarea"); t.value = q; t.style.position = "fixed"; t.style.opacity = "0"; document.body.appendChild(t); t.select(); copied = document.execCommand("copy"); t.remove(); } catch(e){}
-  }
-  toast(copied ? "Zoektekst gekopieerd: plak ze in het zoekveld (" + q + ")" : "Zoek op: " + q);
-  window.open("https://130point.com/sales/", "_blank", "noopener");
-});
 /* ==========================================================
    EVENTS + INIT
    ========================================================== */
