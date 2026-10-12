@@ -512,7 +512,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v27</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v28</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1223,16 +1223,19 @@ function setsSummary(){
 /* ---- promo's: MEP* en SVP* krijgen een eigen set in het juiste tijdperk ---- */
 const PROMO_SETS = {
   "Mega Evolution Promos": { era: "Mega Evolution", date: "2025-09-26" },
-  "Scarlet & Violet Promos": { era: "Scarlet & Violet", date: "2023-03-31" }
+  "Scarlet & Violet Promos": { era: "Scarlet & Violet", date: "2023-03-31" },
+  "Sword & Shield Promos": { era: "Sword & Shield", date: "2019-11-15" }
 };
 function setOf(c){
   const n = String(c.number || "").trim().toUpperCase();
   if (n.startsWith("MEP")) return "Mega Evolution Promos";
   if (n.startsWith("SVP")) return "Scarlet & Violet Promos";
+  if (n.startsWith("SWSH")) return "Sword & Shield Promos";
   return c.set;
 }
 
 /* ---- tijdperken (op releasedatum van de set) ---- */
+const ERA_YEARS = {"Mega Evolution": "2025 – heden", "Scarlet & Violet": "2023 – 2025", "Sword & Shield": "2020 – 2023", "Sun & Moon": "2017 – 2019", "XY": "2014 – 2016", "Black & White": "2011 – 2013", "HeartGold & SoulSilver": "2010 – 2011", "Platinum": "2009", "Diamond & Pearl": "2007 – 2008", "EX": "2003 – 2007", "e-Card": "2002 – 2003", "Klassiek (Base t/m Neo)": "1999 – 2002"};
 const ERAS = [
   ["2025-09-01", "Mega Evolution"],
   ["2023-03-01", "Scarlet & Violet"],
@@ -1299,7 +1302,7 @@ async function renderHome(){
     if (era !== lastEra){
       lastEra = era;
       const h = document.createElement("div"); h.className = "era-head";
-      h.innerHTML = `<span><b style="font-weight:800;">${escapeHTML(era)}</b></span><small>${eraCount[era]} ${eraCount[era] === 1 ? "set" : "sets"}</small>`;
+      h.innerHTML = `<span><b style="font-weight:800;">${escapeHTML(era)}</b>${ERA_YEARS[era] ? ` <b style="font-weight:800;opacity:.85;">· ${ERA_YEARS[era]}</b>` : ""}</span><small>${eraCount[era]} ${eraCount[era] === 1 ? "set" : "sets"}</small>`;
       grid.appendChild(h);
     }
     const tile = document.createElement("div");
