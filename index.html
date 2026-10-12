@@ -542,8 +542,8 @@
   #idleScreen::before{ width:520px; height:520px; right:-160px; bottom:-200px; background:rgba(255,255,255,.12); }
   #idleScreen::after{ width:340px; height:340px; left:-110px; top:-120px; background:rgba(255,203,5,.2); }
   #idleScreen > *{ position:relative; z-index:1; }
-  .idle-logo{ height:120px; width:auto; filter:drop-shadow(0 4px 8px rgba(0,40,80,.35)); }
-  .idle-stage{ display:flex; align-items:center; justify-content:center; gap:26px; height:min(46vh,380px); }
+  .idle-logo{ height:min(24vh,200px); width:auto; filter:drop-shadow(0 4px 8px rgba(0,40,80,.35)); }
+  .idle-stage{ display:flex; align-items:center; justify-content:center; gap:26px; height:min(38vh,330px); }
   .idle-card{ height:100%; aspect-ratio:5/7; transition:transform .8s ease, opacity .8s ease; border-radius:14px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; }
   .idle-card img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 12px 22px rgba(0,30,60,.45)); border-radius:10px; }
   .idle-card.side{ transform:scale(.72); opacity:.55; }
@@ -555,7 +555,7 @@
   .idle-price{ font-weight:800; font-size:22px; color:#FFCB05; }
   .idle-cta{ margin-top:6px; display:inline-block; padding:14px 30px; border-radius:999px; background:#FFCB05; color:#10181C; font-family:var(--font-display); font-weight:800; font-size:20px; box-shadow:0 8px 18px rgba(0,30,60,.3); animation:idlePulse 2.2s ease-in-out infinite; }
   @keyframes idlePulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.06); } }
-  @media (max-width:560px){ .idle-card.side{ display:none; } .idle-logo{ height:64px; } }
+  @media (max-width:560px){ .idle-card.side{ display:none; } .idle-logo{ height:100px; } }
 </style>
 </head>
 <body>
@@ -621,7 +621,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v42</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v43</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
