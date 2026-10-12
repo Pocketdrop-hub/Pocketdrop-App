@@ -510,7 +510,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v24</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v25</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -701,6 +701,12 @@
         <div class="admin-note">Voegt in Blad1 de kolom "Conditie" toe (standaard "Near Mint"), maakt de tabbladen "Slabs" en "Sealed" aan als ze nog niet bestaan, en verwijdert de kolom "Type" uit Sealed.</div>
 
         <hr class="admin-divider">
+        <div class="admin-section-title">Catalogus (alle Engelse kaarten)</div>
+        <button class="btn btn-primary" id="catBtn" type="button" style="width:100%;">Catalogus bijwerken</button>
+        <div class="sf-msg" id="catMsg"></div>
+        <div class="admin-note">Zet alle Engelse kaarten uit TCGdex, per set en per nummer, in het tabblad "Catalogus" van de sheet. Duurt een paar minuten; laat dit scherm open. Het raakt jullie voorraad (Blad1) niet aan.</div>
+
+        <hr class="admin-divider">
         <div class="admin-section-title">Dagoverzicht</div>
         <div class="field-row">
           <div class="field"><label>Datum</label><input id="dayDate" type="date"></div>
@@ -713,6 +719,8 @@
         <div class="admin-section-title">Aankoop van klant registreren</div>
         <form id="purchaseForm">
           <button type="button" class="btn btn-yellow" id="pScanBtn" style="width:100%;margin-bottom:10px;">📷 Kaart scannen (vult set, nummer en naam in)</button>
+          <div class="field"><label>Zoek in catalogus (naam, evt. + nummer)</label><input id="pCat" type="text" placeholder="bv. pikachu 025" autocomplete="off"></div>
+          <div id="pCatRes" class="day-list" style="margin-bottom:10px;"></div>
           <div class="field-row">
             <div class="field"><label>Set</label><input id="pSet" list="setList" required></div>
             <div class="field"><label>Nummer</label><input id="pNumber"></div>
@@ -2181,8 +2189,24 @@ async function scanIntoPurchase(){
       if (c.vkp !== null && c.vkp !== undefined) $("pVkp").value = String(c.vkp).replace(".", ",");
       m.className = "sf-msg ok"; m.textContent = "Herkend in de collectie: " + c.name + " (" + c.set + " " + c.number + ")" + (hits.length > 1 ? " – er zijn meerdere versies, controleer de set." : "");
     } else {
-      if (r.nums.length) $("pNumber").value = r.nums[0];
-      m.className = "sf-msg err"; m.textContent = "Kaart staat nog niet in de collectie: vul set en naam zelf in" + (r.nums.length ? " (nummer " + r.nums[0] + " gelezen)." : ".");
+      let found = [];
+      try {
+        for (const n of r.nums.slice(0, 3)){
+          const j = await catSearch("", n);
+          found = (j.items || []).filter(x => { const nm = scanName(x.name); return nm.length >= 3 && r.flat.includes(nm); });
+          if (found.length) break;
+        }
+      } catch(e){}
+      if (found.length){
+        const mx = Math.max.apply(null, found.map(x => scanName(x.name).length));
+        const cands = found.filter(x => scanName(x.name).length === mx);
+        const x = cands[0];
+        $("pSet").value = x.set; $("pNumber").value = x.number; $("pName").value = x.name;
+        m.className = "sf-msg ok"; m.textContent = "Gevonden in catalogus: " + x.name + " (" + x.set + " " + x.number + ")" + (cands.length > 1 ? " – " + cands.length + " sets mogelijk, controleer de set." : ".");
+      } else {
+        if (r.nums.length) $("pNumber").value = r.nums[0];
+        m.className = "sf-msg err"; m.textContent = "Kaart niet herkend: zoek ze in de catalogus hierboven" + (r.nums.length ? " (nummer " + r.nums[0] + " gelezen)." : ".");
+      }
     }
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
 }
@@ -2301,6 +2325,53 @@ $("dayBtn").addEventListener("click", async () => {
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
 });
 updateCartFab();
+
+
+/* ---- catalogus ---- */
+async function catSearch(q, n){
+  const u = API_URL + "?action=catalogsearch&q=" + encodeURIComponent(q || "") + "&n=" + encodeURIComponent(n || "");
+  const res = await fetch(u); const j = await res.json();
+  if (!j.ok) throw new Error(j.error || "Zoeken mislukt");
+  return j;
+}
+let catTimer = null;
+$("pCat").addEventListener("input", () => {
+  clearTimeout(catTimer);
+  const box = $("pCatRes"), v = $("pCat").value.trim();
+  if (v.length < 2){ box.innerHTML = ""; return; }
+  catTimer = setTimeout(async () => {
+    box.innerHTML = '<div style="color:var(--grey)">Zoeken…</div>';
+    try {
+      const m = v.match(/^(.*?)\s*(\d{1,3}[a-z]?)$/i);
+      const j = m && m[1] ? await catSearch(m[1], m[2]) : await catSearch(v, "");
+      if (j.empty){ box.innerHTML = '<div style="color:var(--grey)">Catalogus is nog leeg (Beheer → Catalogus bijwerken).</div>'; return; }
+      const items = j.items.slice(0, 25);
+      box.innerHTML = items.length ? items.map((x, i) => `<div data-i="${i}" style="cursor:pointer;"><span>${escapeHTML(x.name)} · ${escapeHTML(x.set)}</span><b>${escapeHTML(x.number)}</b></div>`).join("") : '<div style="color:var(--grey)">Niets gevonden.</div>';
+      box._items = items;
+    } catch(e){ box.innerHTML = '<div style="color:#b3261e">' + escapeHTML(e.message || String(e)) + '</div>'; }
+  }, 350);
+});
+$("pCatRes").addEventListener("click", (e) => {
+  const d = e.target.closest("div[data-i]"); if (!d) return;
+  const x = $("pCatRes")._items[+d.dataset.i]; if (!x) return;
+  $("pSet").value = x.set; $("pNumber").value = x.number; $("pName").value = x.name;
+  const known = allCards.find(c => nkey(c.name, c.set, c.number) === nkey(x.name, x.set, x.number));
+  if (known && known.vkp !== null && known.vkp !== undefined) $("pVkp").value = String(known.vkp).replace(".", ",");
+  $("pCatRes").innerHTML = ""; $("pCat").value = "";
+});
+$("catBtn").addEventListener("click", async () => {
+  const m = $("catMsg"), b = $("catBtn"); b.disabled = true; m.className = "sf-msg"; m.textContent = "Starten…";
+  try {
+    let reset = true;
+    for (;;){
+      const j = await apiCall({ action: "catalogimport", reset });
+      reset = false;
+      if (j.done){ m.className = "sf-msg ok"; m.textContent = "Klaar ✓ " + (j.rows ? j.rows + " kaarten in " : "") + j.total + " sets."; break; }
+      m.textContent = "Bezig… set " + j.processed + " van " + j.total + " (niet sluiten)";
+    }
+  } catch(err){ m.className = "sf-msg err"; m.textContent = (err.message || String(err)) + " Druk opnieuw om verder te gaan."; }
+  b.disabled = false;
+});
 
 /* ==========================================================
    EVENTS + INIT

@@ -1,4 +1,4 @@
-const CACHE_NAME = "pocketdrop-shell-v24";
+const CACHE_NAME = "pocketdrop-shell-v25";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.png"];
 
 self.addEventListener("install", (event) => {
