@@ -590,7 +590,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v38</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v40</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -2133,6 +2133,7 @@ function renderCollectionTiles(grid){
 function loadItemImage(name, item, img, size){
   img.onload = () => img.classList.add("loaded");
   if (item.foto){ img.src = item.foto; return; }
+  { const ov = findOverride(cacheKey(COLL_DEFS[name].name(item), item.set || "", item.number || "")); if (ov && ov.url){ img.src = ov.url; return; } }
   if (name === "Slabs" && item.card){
     resolveImage(item.card, item.set || "", item.number || "").then(base => { if (base) img.src = imgSrc(base, size); });
   }
@@ -2173,8 +2174,8 @@ function openItem(name, item){
   const img = document.createElement("img");
   img.alt = d.name(item);
   img.style.display = "none";
-  img.onload = () => { wrap.innerHTML = ""; img.style.display = ""; wrap.appendChild(img); };
   loadItemImage(name, item, img, "high");
+  img.onload = () => { img.classList.add("loaded"); wrap.innerHTML = ""; img.style.display = ""; wrap.appendChild(img); };
   $("itemStaff").style.display = adminUnlocked ? "" : "none";
   $("itQty").value = q === null ? "" : q;
   $("itPrice").value = itemPrice(item) === null ? "" : String(itemPrice(item)).replace(".", ",");
@@ -2602,8 +2603,9 @@ function seasonNow(d){
   return "standaard";
 }
 function applySeason(){
-  const el = document.getElementById("heroBanner"); if (!el) return;
   const key = seasonNow(new Date()), S = SEASONS[key];
+  { const bl = document.querySelector("#brandHome img"); if (bl){ if (!bl.dataset.orig) bl.dataset.orig = bl.src; bl.src = key === "halloween" ? "logo-halloween.png" : bl.dataset.orig; bl.style.height = key === "halloween" ? "56px" : ""; } }
+  const el = document.getElementById("heroBanner"); if (!el) return;
   el.dataset.season = key;
   let deco = el.querySelector(".hero-deco");
   if (!deco){ deco = document.createElement("div"); deco.className = "hero-deco"; deco.setAttribute("aria-hidden", "true"); el.appendChild(deco); }
