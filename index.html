@@ -284,6 +284,14 @@
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
   }
+  .modal-img{ position:relative; }
+  .modal-img:has(img){ cursor:zoom-in; }
+  .modal-img:has(img)::after{ content:"🔍"; position:absolute; right:6px; bottom:6px; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,.92); box-shadow:0 2px 6px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; font-size:14px; pointer-events:none; }
+  .zoom-overlay{ position:fixed; inset:0; z-index:400; background:rgba(8,20,32,.92); display:flex; align-items:center; justify-content:center; padding:16px; opacity:0; pointer-events:none; transition:opacity .2s ease; cursor:zoom-out; }
+  .zoom-overlay.show{ opacity:1; pointer-events:auto; }
+  .zoom-overlay img{ max-width:96vw; max-height:92vh; object-fit:contain; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.5); transform:scale(.96); transition:transform .22s cubic-bezier(.2,.8,.25,1); }
+  .zoom-overlay.show img{ transform:scale(1); }
+  .zoom-overlay .zoom-x{ position:absolute; top:14px; right:14px; width:42px; height:42px; border-radius:50%; border:0; background:rgba(255,255,255,.95); font-size:20px; font-weight:800; cursor:pointer; color:#10181C; }
   .modal-img img{ width:92%; height:92%; object-fit:contain; border-radius:6px; filter:drop-shadow(0 8px 10px rgba(11,60,90,.32)); transition:opacity .25s ease, transform .3s ease; }
   .modal-title-block{ flex:1; min-width:0; }
   .modal-set{ font-size:12px; font-weight:700; color:var(--grey); text-transform:uppercase; letter-spacing:.4px; }
@@ -628,7 +636,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v53</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v57</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -998,6 +1006,7 @@
 </div>
 </div>
 <div id="printSheet"></div>
+<div class="zoom-overlay" id="zoomOverlay"><button class="zoom-x" type="button" aria-label="Sluiten">✕</button><img alt=""></div>
 <div id="toast"></div>
 
 <script>
@@ -1844,7 +1853,8 @@ async function resolveSetMetaApi(setName){
    MODAL
    ========================================================== */
 function imgSrc(base, size){
-  if (/^data:/i.test(base) || /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(base)) return base;
+  // eigen foto's (data-URL, Google Drive, ...) ongewijzigd laten; enkel TCGdex-adressen krijgen /low.webp of /high.webp
+  if (/^data:/i.test(base) || /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(base) || !/tcgdex\.net/i.test(base)) return base;
   return base + "/" + size + ".webp";
 }
 
@@ -1858,8 +1868,8 @@ function openModal(card){
   document.getElementById("modalCond").textContent = card.condition || "—";
   const outOfStock = card.qty !== null && card.qty <= 0;
   document.getElementById("modalStock").textContent = card.qty === null ? "—" : (outOfStock ? "Uitverkocht" : card.qty + "× op voorraad");
-  document.getElementById("modalLowest").textContent = card.lowest !== null ? fmtPrice(card.lowest) : "—";
-  document.getElementById("modalLowestWrap").style.display = card.lowest !== null ? "" : "none";
+  document.getElementById("modalLowest").textContent = (adminUnlocked && card.lowest !== null) ? fmtPrice(card.lowest) : "";
+  document.getElementById("modalLowestWrap").style.display = (adminUnlocked && card.lowest !== null) ? "" : "none";
 
   const imgWrap = document.getElementById("modalImg");
   imgWrap.innerHTML = placeholderSVG;
@@ -1870,6 +1880,17 @@ function openModal(card){
   document.getElementById("modalBackdrop").classList.add("show");
   if (typeof renderStaffPanel === "function") renderStaffPanel();
 }
+/* ---- afbeelding vergroten: tik op de kaartafbeelding ---- */
+function openZoom(src, alt){
+  const o = document.getElementById("zoomOverlay"), im = o.querySelector("img");
+  im.src = src; im.alt = alt || ""; o.classList.add("show");
+}
+function closeZoom(){ document.getElementById("zoomOverlay").classList.remove("show"); }
+document.getElementById("zoomOverlay").addEventListener("click", closeZoom);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeZoom(); });
+["modalImg", "itemImg"].forEach(id => document.getElementById(id).addEventListener("click", () => {
+  const im = document.getElementById(id).querySelector("img"); if (im && im.src && im.style.display !== "none") openZoom(im.src, im.alt);
+}));
 document.getElementById("closeModal").onclick = () => document.getElementById("modalBackdrop").classList.remove("show");
 document.getElementById("modalBackdrop").addEventListener("click", (e) => {
   if (e.target.id === "modalBackdrop") e.currentTarget.classList.remove("show");
@@ -2119,6 +2140,8 @@ function sfMsg(text, ok){ const m = $("sfMsg"); m.textContent = text; m.classNam
 function renderStaffPanel(){
   const c = modalCard;
   $("staffPanel").style.display = (adminUnlocked && c) ? "" : "none";
+  { const w = $("modalLowestWrap"), show = adminUnlocked && c && c.lowest !== null && c.lowest !== undefined;
+    if (w){ w.style.display = show ? "" : "none"; $("modalLowest").textContent = show ? fmtPrice(c.lowest) : ""; } }
   if (!adminUnlocked || !c) return;
   { const a = $("sfCm"), u = String(c.cmLink || "").trim(), ok = /^https?:\/\//i.test(u);
     a.style.display = ok ? "block" : "none"; a.href = ok ? u : "#"; }
@@ -3166,6 +3189,29 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
 document.getElementById("refreshBtn").addEventListener("click", () => fetchData(false));
 document.getElementById("backToSetsBtn").addEventListener("click", goHome);
 document.getElementById("brandHome").addEventListener("click", goHome);
+
+/* ---- opruimen van oude gegevens op dit toestel (hoogstens één keer per week) ---- */
+function cleanOldStorage(){
+  try {
+    const CLEAN_KEY = "pocketdrop_cleaned_v1", now = Date.now();
+    if (now - (parseInt(localStorage.getItem(CLEAN_KEY) || "0", 10) || 0) < 7 * 86400000) return;
+    const known = new Set([API_SECRET_KEY, PENDING_KEY, STAFF_KEY, DATA_CACHE_KEY, IMG_CACHE_KEY, MANUAL_CARDS_KEY, PIN_KEY, SET_LOGO_CACHE_KEY,
+      SET_LOGO_OVERRIDE_KEY, IMAGE_OVERRIDE_KEY, CARD_OVERRIDE_KEY, QUEUE_KEY, QUEUE_FAILED_KEY, COLL_CACHE_KEY, CART_KEY, FAIR_CACHE_KEY,
+      SCAN_READY_KEY, ADMIN_TAB_KEY, CLEAN_KEY]);
+    let removed = 0;
+    Object.keys(localStorage).forEach(k => {
+      if (k.indexOf("pocketdrop_") === 0 && !known.has(k)){ try { localStorage.removeItem(k); removed++; } catch(e){} }
+    });
+    // verlopen tijdelijke wijzigingen en oude meldingen van de offline-wachtrij
+    const pend = loadPending(), keep = pend.filter(p => now - p.at <= PENDING_TTL);
+    if (keep.length !== pend.length) savePending(keep);
+    const fq = failedQueue.filter(f => now - (f.at || 0) < 30 * 86400000);
+    if (fq.length !== failedQueue.length){ failedQueue = fq; saveQueue(); }
+    localStorage.setItem(CLEAN_KEY, String(now));
+    if (removed) console.log("Opgeruimd: " + removed + " oude opslagitem(s)");
+  } catch(e){}
+}
+cleanOldStorage();
 
 loadFromCache();
 fetchData(!!csvCards.length);
