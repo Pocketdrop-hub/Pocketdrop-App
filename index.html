@@ -628,7 +628,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v52</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v53</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -652,6 +652,7 @@
       </div>
       <div class="staff-box" id="staffPanel" style="display:none;">
         <h4>Personeel · beheer deze kaart</h4>
+        <a id="sfCm" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer" style="display:none;text-decoration:none;text-align:center;box-sizing:border-box;width:100%;margin:0 0 10px;">🔗 Bekijk op Cardmarket ↗</a>
         <div id="staffManualNote" style="display:none;font-size:13px;color:var(--grey);">Dit is een lokaal toegevoegde kaart (niet in de sheet). Pas ze aan via Beheer.</div>
         <div id="staffEdit">
           <div class="btn-row">
@@ -2119,6 +2120,8 @@ function renderStaffPanel(){
   const c = modalCard;
   $("staffPanel").style.display = (adminUnlocked && c) ? "" : "none";
   if (!adminUnlocked || !c) return;
+  { const a = $("sfCm"), u = String(c.cmLink || "").trim(), ok = /^https?:\/\//i.test(u);
+    a.style.display = ok ? "block" : "none"; a.href = ok ? u : "#"; }
   $("staffManualNote").style.display = c.manual ? "" : "none";
   $("staffEdit").style.display = c.manual ? "none" : "";
   if (c.manual) return;
