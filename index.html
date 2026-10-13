@@ -670,7 +670,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v65</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v66</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -836,6 +836,9 @@
         <div class="atab" data-tab="kaarten">
         <div class="admin-section-title">Waarde van de catalogus</div>
         <div id="catStats"></div>
+        <div class="field-row" style="margin-top:12px;"><div class="field"><label>Verloop</label><select id="trendPeriod"><option value="30">Laatste 30 dagen</option><option value="90">Laatste 90 dagen</option><option value="365">Laatste jaar</option><option value="0">Alles</option></select></div></div>
+        <div id="catTrend"></div>
+        <div class="export-row"><button class="btn btn-ghost" type="button" id="waardeSnapBtn">💾 Waarde nu opslaan</button></div>
         <div class="admin-note">Alleen losse kaarten uit Blad1. Slabs en sealed tellen niet mee. De waarde is aantal × verkoopprijs.</div>
         <hr class="admin-divider">
         <div class="admin-section-title">Bestaande kaart aanpassen</div>
@@ -2794,6 +2797,7 @@ function saveTrade(){ try { localStorage.setItem(TRADE_KEY, JSON.stringify(trade
 function tradeTotal(){ return Math.round(trade.reduce((a, t) => a + (t.qty || 0) * (t.value || 0), 0) * 100) / 100; }
 function dueAmount(){ return Math.round((cartTotal() - tradeTotal()) * 100) / 100; }
 function effPay(){ return dueAmount() < 0 ? "Cash" : payMethod; }
+function knownVkp(t){ const k = allCards.find(c => nkey(c.name, c.set, c.number) === nkey(t.name, t.set, t.number)); return k && k.vkp !== null && k.vkp !== undefined ? k.vkp : null; }
 function renderTrade(){
   const open = tradeOpen || trade.length > 0, n = trade.reduce((a, t) => a + (t.qty || 0), 0);
   $("tradeBody").style.display = open ? "" : "none";
@@ -2806,11 +2810,11 @@ function renderTrade(){
         <input type="text" inputmode="decimal" data-t="value" data-i="${i}" value="${t.value === null || t.value === undefined ? "" : String(t.value).replace(".", ",")}" placeholder="waarde €">
         <button type="button" data-ta="del" data-i="${i}">🗑</button>
       </div>
-      <div class="cl-disc"><select data-t="mode" data-i="${i}"><option value="stock"${t.mode === "own" ? "" : " selected"}>📦 In voorraad</option><option value="own"${t.mode === "own" ? " selected" : ""}>⭐ Eigen collectie</option></select></div>
+      <div class="cl-disc"><select data-t="mode" data-i="${i}"><option value="stock"${t.mode === "own" ? "" : " selected"}>📦 In voorraad</option><option value="own"${t.mode === "own" ? " selected" : ""}>⭐ Eigen collectie</option></select>${t.mode === "own" ? "" : `<span>Verkoopprijs €</span><input type="text" inputmode="decimal" data-t="vkp" data-i="${i}" value="${t.vkp === null || t.vkp === undefined ? "" : String(t.vkp).replace(".", ",")}" placeholder="optioneel" style="width:90px;">`}</div>
     </div>`).join("");
 }
 $("tradeToggle").addEventListener("click", () => { tradeOpen = !(tradeOpen || trade.length > 0) ; renderTrade(); });
-$("tradeManual").addEventListener("click", () => { trade.push({ set: "", number: "", name: "", qty: 1, value: null, mode: "stock", manual: true }); tradeOpen = true; saveTrade(); renderTrade(); renderCart(); });
+$("tradeManual").addEventListener("click", () => { trade.push({ set: "", number: "", name: "", qty: 1, value: null, vkp: null, mode: "stock", manual: true }); tradeOpen = true; saveTrade(); renderTrade(); renderCart(); });
 $("tradeLines").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-ta]"); if (!b) return;
   const i = +b.dataset.i, t = trade[i]; if (!t) return;
@@ -2822,8 +2826,9 @@ $("tradeLines").addEventListener("change", (e) => {
   const t = trade[+inp.dataset.i]; if (!t) return;
   const k = inp.dataset.t;
   if (k === "value"){ const v = parseMoney(inp.value); t.value = v === null || v < 0 ? null : v; }
+  else if (k === "vkp"){ const v = parseMoney(inp.value); t.vkp = v === null || v < 0 ? null : v; }
   else if (k === "mode") t.mode = inp.value;
-  else t[k] = inp.value.trim();
+  else { t[k] = inp.value.trim(); if ((k === "name" || k === "set" || k === "number") && (t.vkp === null || t.vkp === undefined)) t.vkp = knownVkp(t); }
   saveTrade(); renderTrade(); renderCart();
 });
 let tCatTimer = null;
@@ -2847,7 +2852,7 @@ $("tCatRes").addEventListener("click", (e) => {
   const d = e.target.closest("div[data-i]"); if (!d) return;
   const x = $("tCatRes")._items && $("tCatRes")._items[+d.dataset.i]; if (!x) return;
   const ex = trade.find(t => !t.manual && nkey(t.name, t.set, t.number) === nkey(x.name, x.set, x.number));
-  if (ex) ex.qty++; else trade.push({ set: x.set, number: x.number, name: x.name, qty: 1, value: null, mode: "stock", manual: false });
+  if (ex) ex.qty++; else { const nt = { set: x.set, number: x.number, name: x.name, qty: 1, value: null, vkp: null, mode: "stock", manual: false }; nt.vkp = knownVkp(nt); trade.push(nt); }
   $("tCatRes").innerHTML = ""; $("tCat").value = ""; tradeOpen = true; saveTrade(); renderTrade(); renderCart();
 });
 let payMethod = "Cash";
@@ -3020,7 +3025,7 @@ $("cartCheckout").addEventListener("click", async () => {
       ? { type: "item", sheet: l.sheet, match: l.match, qty: l.qty, price: l.price === null ? l.price : u, disc: d }
       : Object.assign({ type: "card", qty: l.qty, price: l.price === null ? l.price : u, disc: d }, l.match); });
     const tradePay = trade.map(t => { const k = allCards.find(c => nkey(c.name, c.set, c.number) === nkey(t.name, t.set, t.number));
-      return { mode: t.mode === "own" ? "own" : "stock", set: t.set, number: t.number, name: t.name, qty: t.qty, value: t.value, cond: (k && k.condition) || "Near Mint", vkp: k && k.vkp !== null && k.vkp !== undefined ? k.vkp : undefined }; });
+      return { mode: t.mode === "own" ? "own" : "stock", set: t.set, number: t.number, name: t.name, qty: t.qty, value: t.value, cond: (k && k.condition) || "Near Mint", vkp: t.vkp !== null && t.vkp !== undefined ? t.vkp : (k && k.vkp !== null && k.vkp !== undefined ? k.vkp : undefined) }; });
     const payUsed = effPay();
     const j = await apiCall({ action: "sellbatch", lines, pay: payUsed, trade: tradePay });
     const rest = [], total = { n: 0, eur: 0 }, soldLines = []; let problems = 0;
@@ -3044,7 +3049,7 @@ $("cartCheckout").addEventListener("click", async () => {
       trade.forEach((t, i) => { if (t.mode === "own") return; const r = tr[i];
         const k = allCards.find(c => nkey(c.name, c.set, c.number) === nkey(t.name, t.set, t.number));
         const qty = r && r.ok ? r.qty : ((k && k.qty !== null && k.qty !== undefined ? k.qty : 0) + t.qty);
-        const vkp = r && r.ok && r.vkp !== undefined && r.vkp !== "" ? r.vkp : (k ? k.vkp : null);
+        const vkp = t.vkp !== null && t.vkp !== undefined ? t.vkp : (r && r.ok && r.vkp !== undefined && r.vkp !== "" ? r.vkp : (k ? k.vkp : null));
         afterWrite({ set: t.set, number: t.number, name: t.name }, { qty, vkp }, { set: t.set, number: t.number, name: t.name, cond: (k && k.condition) || "Near Mint" }); });
       lastSale = { bon: j.bon || "", at: Date.now(), n: total.n, eur: Math.round(total.eur * 100) / 100, pay: payUsed, lines: soldLines, trade: trade.map(t => ({ mode: t.mode, set: t.set, number: t.number, name: t.name, qty: t.qty, value: t.value, cond: "Near Mint" })), due: dueAmount() };
       saveLastSale(); trade = []; saveTrade(); renderTrade();
@@ -3095,6 +3100,42 @@ function renderCatStats(){
     (noPrice ? `<div style="color:var(--grey);font-size:12px;">${noPrice} kaart(en) in bezit hebben geen verkoopprijs en tellen niet mee in de verkoopwaarde.</div>` : "") + (noLowest ? `<div style="color:var(--grey);font-size:12px;">${noLowest} kaart(en) in bezit hebben geen Cardmarket richtprijs en tellen niet mee in de CM waarde.</div>` : "") +
     (rows.length ? `<details style="margin-top:8px;"><summary style="cursor:pointer;font-weight:700;font-size:14px;">Per set</summary><div class="day-list">${rows.map(r => `<div><span>${escapeHTML(r.set)} · ${r.qty}×</span><b>${fmtPrice(r.value)} <small style="font-weight:400;color:var(--grey)">· CM ${fmtPrice(r.cm)}</small></b></div>`).join("")}</div></details>` : "");
 }
+/* ---- v66: waardeverloop (tabblad "Waarde" in de sheet) ---- */
+let waardeHist = [], waardeFetchedAt = 0, waardeSnapAt = 0, waardeErr = "";
+function renderTrend(){
+  const box = $("catTrend"); if (!box) return;
+  const days = Number($("trendPeriod").value) || 0;
+  let rows = waardeHist.slice();
+  if (days){ const from = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10); rows = rows.filter(r => r.date >= from); }
+  if (waardeErr && !rows.length){ box.innerHTML = `<div style="color:var(--grey);font-size:13px;">${escapeHTML(waardeErr)}</div>`; return; }
+  if (rows.length < 2){ box.innerHTML = `<div style="color:var(--grey);font-size:13px;">Het verloop verschijnt zodra er minstens twee dagen opgeslagen zijn.${rows.length ? " (Nu: " + rows.length + ")" : ""}</div>`; return; }
+  const W = 320, H = 130, pl = 6, pr = 6, pt = 8, pb = 8;
+  const t0 = Date.parse(rows[0].date), t1 = Date.parse(rows[rows.length - 1].date) || t0 + 1;
+  const all = rows.flatMap(r => [r.value, r.cm]), mn = Math.min(...all), mx = Math.max(...all), span = (mx - mn) || 1;
+  const x = r => pl + ((Date.parse(r.date) - t0) / ((t1 - t0) || 1)) * (W - pl - pr), y = v => pt + (1 - (v - mn) / span) * (H - pt - pb);
+  const line = (key, col) => `<polyline fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${rows.map(r => x(r).toFixed(1) + "," + y(r[key]).toFixed(1)).join(" ")}"/>`;
+  const fd = d => d.split("-").reverse().slice(0, 2).join("/");
+  const first = rows[0], last = rows[rows.length - 1];
+  const delta = (k) => { const d = Math.round((last[k] - first[k]) * 100) / 100; return (d >= 0 ? "+" : "–") + " " + fmtPrice(Math.abs(d)); };
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--cream-alt);border-radius:12px;">${line("value", "#0B67A7")}${line("cm", "#d99a00")}</svg>` +
+    `<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--grey);margin:2px 4px;"><span>${fd(first.date)}</span><span>min ${fmtPrice(mn)} · max ${fmtPrice(mx)}</span><span>${fd(last.date)}</span></div>` +
+    `<div class="day-list" style="margin-top:6px;"><div><span><span style="color:#0B67A7">●</span> Verkoopwaarde nu ${fmtPrice(last.value)}</span><b>${delta("value")} sinds ${fd(first.date)}</b></div><div><span><span style="color:#d99a00">●</span> CM waarde nu ${fmtPrice(last.cm)}</span><b>${delta("cm")} sinds ${fd(first.date)}</b></div><div><span>Kaarten in bezit ${last.qty}</span><b>${last.qty - first.qty >= 0 ? "+" : "–"} ${Math.abs(last.qty - first.qty)}</b></div></div>`;
+}
+async function loadWaarde(force, snap){
+  if (!adminUnlocked) return;
+  const now = Date.now();
+  if (!force && now - waardeFetchedAt < 60000) return;
+  waardeFetchedAt = now;
+  try {
+    if (snap || now - waardeSnapAt > 30 * 60000){ waardeSnapAt = now; const sj = await apiCall({ action: "waardesnap" }); if (!sj || sj.ok === false || sj.value === undefined) throw new Error("Het script is nog niet bijgewerkt naar versie 19."); }
+    const j = await apiCall({ action: "waarde" });
+    if (!j || !j.ok || !j.rows) throw new Error("Het script is nog niet bijgewerkt naar versie 19.");
+    waardeHist = j.rows; waardeErr = "";
+  } catch(e){ const m = e.message || String(e); waardeErr = /Onbekende actie/i.test(m) ? "Het script is nog niet bijgewerkt naar versie 19." : m; }
+  renderTrend();
+}
+$("trendPeriod").addEventListener("change", renderTrend);
+$("waardeSnapBtn").addEventListener("click", async () => { const b = $("waardeSnapBtn"); b.disabled = true; b.textContent = "Bezig…"; await loadWaarde(true, true); b.disabled = false; b.textContent = waardeErr ? "Opslaan mislukt, probeer opnieuw" : "✓ Opgeslagen"; setTimeout(() => { b.textContent = "💾 Waarde nu opslaan"; }, 2500); });
 /* ---- v61: dagafsluiting met bonnen, betaalwijze, winst en kas ---- */
 function kasState(date){ try { return JSON.parse(localStorage.getItem(KAS_PREFIX + date) || "{}") || {}; } catch(e){ return {}; } }
 function kasCalc(j){
@@ -3618,6 +3659,7 @@ function closeAdmin(){
 }
 function showAdminContent(){
   try { renderCatStats(); } catch(e){}
+  try { loadWaarde(false); } catch(e){}
   document.getElementById("pinGate").style.display = "none";
   document.getElementById("adminContent").style.display = "";
   renderSetList();
