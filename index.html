@@ -628,7 +628,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v51</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v52</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1471,17 +1471,19 @@ function setsSummary(){
 }
 
 
-/* ---- promo's: MEP* en SVP* krijgen een eigen set in het juiste tijdperk ---- */
+/* ---- promo's: MEP*, SVP*, SWSH* en SM* krijgen een eigen set in het juiste tijdperk ---- */
 const PROMO_SETS = {
   "Mega Evolution Promos": { era: "Mega Evolution", date: "2025-09-26" },
   "Scarlet & Violet Promos": { era: "Scarlet & Violet", date: "2023-03-31" },
-  "Sword & Shield Promos": { era: "Sword & Shield", date: "2019-11-15" }
+  "Sword & Shield Promos": { era: "Sword & Shield", date: "2019-11-15" },
+  "Sun & Moon Promos": { era: "Sun & Moon", date: "2016-11-18" }
 };
 function setOf(c){
   const n = String(c.number || "").trim().toUpperCase();
   if (n.startsWith("MEP")) return "Mega Evolution Promos";
   if (n.startsWith("SVP")) return "Scarlet & Violet Promos";
   if (n.startsWith("SWSH")) return "Sword & Shield Promos";
+  if (/^SM\d/.test(n)) return "Sun & Moon Promos";
   return c.set;
 }
 
