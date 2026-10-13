@@ -255,6 +255,24 @@
   .cart-line .cl-ctl input{ width:80px; padding:7px; border-radius:8px; border:1px solid rgba(0,0,0,.15); font-size:14px; }
   .cart-line .cl-err{ grid-column:1/-1; color:#b3261e; font-size:12px; font-weight:700; }
   .cart-total{ display:flex; justify-content:space-between; font-size:18px; font-weight:800; padding:14px 0 8px; }
+  .cl-disc{ grid-column:1/-1; display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; color:var(--grey); }
+  .cl-disc input[type=text]{ width:84px; padding:6px; border-radius:8px; border:1px solid rgba(0,0,0,.15); font-size:14px; }
+  .cl-disc label{ display:flex; gap:5px; align-items:center; cursor:pointer; }
+  .cl-disc input[type=checkbox]{ width:20px; height:20px; }
+  .grp-disc{ background:var(--cream-alt); border-radius:12px; padding:10px 12px; margin:10px 0 0; font-size:13px; }
+  .grp-disc .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+  .grp-disc input{ width:100px; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,.15); font-size:15px; }
+  .grp-disc button{ padding:8px 10px; border-radius:8px; border:0; background:#fff; font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,.15); cursor:pointer; }
+  .cart-sum{ font-size:14px; padding:10px 0 0; } .cart-sum div{ display:flex; justify-content:space-between; padding:2px 0; } .cart-sum .dsc{ color:#c62828; }
+  .buyavg{ background:var(--cream-alt); border-radius:10px; padding:8px 12px; margin:0 0 10px; font-size:14px; display:flex; justify-content:space-between; gap:8px; }
+  .kassa{ background:var(--cream-alt); border-radius:14px; padding:12px; margin:4px 0 12px; }
+  .kassa label{ font-size:12px; color:var(--grey); font-weight:700; display:block; margin-bottom:4px; }
+  .kassa input{ width:100%; font-size:22px; font-weight:800; padding:10px 12px; border-radius:10px; border:2px solid rgba(0,0,0,.12); box-sizing:border-box; }
+  .kassa .quick{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+  .kassa .quick button{ flex:1 1 60px; padding:10px 6px; border-radius:10px; border:0; background:#fff; font-weight:800; font-size:15px; box-shadow:0 1px 3px rgba(0,0,0,.15); cursor:pointer; }
+  .kassa .change{ display:flex; justify-content:space-between; font-size:22px; font-weight:800; padding-top:6px; }
+  .kassa .change.ok b{ color:#1a8f3c; } .kassa .change.short b{ color:#c62828; }
+  .day-h{ font-weight:800; font-size:14px; margin:14px 0 4px; }
   .day-tiles{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:10px 0; }
   .day-tile{ background:var(--cream-alt); border-radius:12px; padding:10px 12px; }
   .day-tile .v{ font-size:20px; font-weight:800; } .day-tile .l{ font-size:12px; color:var(--grey); }
@@ -636,7 +654,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v58</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v60</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -660,6 +678,7 @@
       </div>
       <div class="staff-box" id="staffPanel" style="display:none;">
         <h4>Personeel · beheer deze kaart</h4>
+        <div class="buyavg" id="buyAvg" style="display:none;"><span>Gem. aankoopprijs</span><b id="buyAvgVal">–</b></div>
         <a id="sfCm" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer" style="display:none;text-decoration:none;text-align:center;box-sizing:border-box;width:100%;margin:0 0 10px;">🔗 Bekijk op Cardmarket ↗</a>
         <div id="staffManualNote" style="display:none;font-size:13px;color:var(--grey);">Dit is een lokaal toegevoegde kaart (niet in de sheet). Pas ze aan via Beheer.</div>
         <div id="staffEdit">
@@ -771,11 +790,11 @@
 
         
         <hr class="admin-divider">
-        <div class="admin-section-title">Dagoverzicht</div>
+        <div class="admin-section-title">Dagafsluiting</div>
         <div class="field-row">
           <div class="field"><label>Datum</label><input id="dayDate" type="date"></div>
         </div>
-        <button class="btn btn-primary" id="dayBtn" type="button" style="width:100%;">Overzicht tonen</button>
+        <button class="btn btn-primary" id="dayBtn" type="button" style="width:100%;">Dagafsluiting tonen</button>
         <div class="sf-msg" id="dayMsg"></div>
         <div id="dayOut"></div>
 
@@ -954,7 +973,19 @@
     <div class="modal-body" style="padding-top:22px;">
       <h3 style="font-family:var(--font-display);margin:0 0 6px;">Winkelmandje</h3>
       <div id="cartLines"></div>
-      <div class="cart-total"><span>Totaal</span><span id="cartTotal">€0,00</span></div>
+      <div class="grp-disc" id="grpDisc">
+        <b>Korting op meerdere kaarten</b> <span id="grpInfo" style="color:var(--grey)"></span>
+        <div class="row"><input id="grpAmt" type="text" inputmode="decimal" placeholder="€ korting"><button type="button" id="grpAll">Alles selecteren</button><button type="button" id="grpNone">Niets</button></div>
+        <div style="color:var(--grey);font-size:12px;margin-top:4px;">Vink hierboven de kaarten aan. De korting wordt eerlijk verdeeld over die kaarten.</div>
+      </div>
+      <div class="cart-sum" id="cartSum"></div>
+      <div class="cart-total"><span>Te betalen</span><span id="cartTotal">€0,00</span></div>
+      <div class="kassa" id="kassa">
+        <label for="cashIn">Ontvangen van klant (€)</label>
+        <input id="cashIn" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
+        <div class="quick" id="cashQuick"><button type="button" data-v="exact">Gepast</button><button type="button" data-v="5">€5</button><button type="button" data-v="10">€10</button><button type="button" data-v="20">€20</button><button type="button" data-v="50">€50</button><button type="button" data-v="100">€100</button></div>
+        <div class="change" id="cashChange"><span>Teruggeld</span><b>–</b></div>
+      </div>
       <button class="btn btn-primary" id="cartCheckout" type="button" style="width:100%;">Verkoop afronden (alles afboeken)</button>
       <button class="btn btn-ghost" id="cartClear" type="button" style="width:100%;margin-top:8px;">Mandje leegmaken</button>
       <div class="sf-msg" id="cartMsg"></div>
@@ -2147,6 +2178,7 @@ function renderStaffPanel(){
     const direct = !!m, url = direct ? m[0] : "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + encodeURIComponent((c.name || "") + " " + (c.number || "")).replace(/%20/g, "+");
     a.style.display = c.manual ? "none" : "block"; a.href = url;
     a.textContent = direct ? "🔗 Bekijk op Cardmarket ↗" : "🔎 Zoek op Cardmarket ↗"; }
+  loadBuyAvg(c);
   $("staffManualNote").style.display = c.manual ? "" : "none";
   $("staffEdit").style.display = c.manual ? "none" : "";
   if (c.manual) return;
@@ -2159,6 +2191,19 @@ function renderStaffPanel(){
   $("sfBuyQty").value = 1; $("sfBuyPrice").value = "";
   $("sfQr").innerHTML = QR.svg(cardUrl(c));
   sfMsg("", true);
+}
+const buyAvgCache = {};
+async function loadBuyAvg(c){
+  const box = $("buyAvg"), val = $("buyAvgVal");
+  if (!adminUnlocked || !c || c.manual){ box.style.display = "none"; return; }
+  const o = c.orig || c, key = nkey(o.name, o.set, o.number);
+  box.style.display = ""; 
+  const show = j => { val.textContent = j && j.n ? fmtPrice(j.avg) + " (" + j.qty + "× ingekocht)" : "nog geen aankoop gelogd"; };
+  if (buyAvgCache[key]) show(buyAvgCache[key]); else val.textContent = "…";
+  try {
+    const j = await apiCall({ action: "buyavg", matchSet: o.set, matchNumber: o.number, matchName: o.name });
+    if (j && j.ok){ buyAvgCache[key] = j; if (modalCard === c) show(j); }
+  } catch(e){ if (!buyAvgCache[key] && modalCard === c) val.textContent = "–"; }
 }
 async function staffRun(btnId, fn){
   const b = $(btnId); b.disabled = true; sfMsg("Bezig…", true);
@@ -2705,7 +2750,29 @@ function cartAdd(line){
   else cart.push(line);
   saveCart(); toast("In mandje: " + line.label);
 }
-function cartTotal(){ return cart.reduce((a, l) => a + l.qty * (l.price || 0), 0); }
+let grpDisc = 0;
+function cartGross(){ return cart.reduce((a, l) => a + l.qty * (l.price || 0), 0); }
+/* korting: per kaart (l.disc, in euro voor die regel) + groepskorting verdeeld over aangevinkte regels */
+function cartCalc(){
+  const c100 = x => Math.round(x * 100);
+  const gross = cart.map(l => c100(l.qty * (l.price || 0)));
+  const disc = cart.map((l, i) => Math.min(gross[i], Math.max(0, c100(parseMoney(String(l.disc || "")) || 0))));
+  let g = Math.max(0, c100(grpDisc || 0));
+  const sel = cart.map((l, i) => i).filter(i => cart[i].sel && gross[i] - disc[i] > 0);
+  const room = sel.reduce((a, i) => a + gross[i] - disc[i], 0);
+  g = Math.min(g, room);
+  if (g > 0 && room > 0){
+    let given = 0; const share = {};
+    sel.forEach(i => { share[i] = Math.floor(g * (gross[i] - disc[i]) / room); given += share[i]; });
+    let rest = g - given;
+    sel.slice().sort((x, y) => (gross[y] - disc[y]) - (gross[x] - disc[x])).forEach(i => { if (rest > 0 && share[i] < gross[i] - disc[i]){ share[i]++; rest--; } });
+    sel.forEach(i => { disc[i] += share[i]; });
+  }
+  const per = cart.map((l, i) => ({ disc: disc[i] / 100, unit: l.qty ? (gross[i] - disc[i]) / 100 / l.qty : 0 }));
+  const dsum = disc.reduce((a, x) => a + x, 0), gsum = gross.reduce((a, x) => a + x, 0);
+  return { per, gross: gsum / 100, disc: dsum / 100, net: (gsum - dsum) / 100, groupApplied: g / 100 };
+}
+function cartTotal(){ return cartCalc().net; }
 function renderCart(){
   const box = $("cartLines");
   if (!cart.length){ box.innerHTML = '<div style="padding:16px 0;color:var(--grey);">Het mandje is leeg.</div>'; }
@@ -2717,11 +2784,33 @@ function renderCart(){
         <input type="text" inputmode="decimal" data-a="price" data-i="${i}" value="${l.price === null || l.price === undefined ? "" : String(l.price).replace(".", ",")}" placeholder="€">
         <button type="button" data-a="del" data-i="${i}">🗑</button>
       </div>
+      <div class="cl-disc">
+        <label><input type="checkbox" data-a="sel" data-i="${i}"${l.sel ? " checked" : ""}> Meetellen voor groepskorting</label>
+        <span>Korting op deze kaart €</span><input type="text" inputmode="decimal" data-a="disc" data-i="${i}" value="${l.disc ? String(l.disc).replace(".", ",") : ""}" placeholder="0,00">
+      </div>
       ${l.err ? `<div class="cl-err">${escapeHTML(l.err)}</div>` : ""}
     </div>`).join("");
-  $("cartTotal").textContent = fmtPrice(cartTotal());
+  const k = cartCalc(), nsel = cart.filter(l => l.sel).length;
+  $("grpInfo").textContent = "· " + nsel + " aangevinkt";
+  $("grpDisc").style.display = cart.length > 1 ? "" : "none";
+  $("cartSum").innerHTML = k.disc > 0 ? `<div><span>Subtotaal</span><span>${fmtPrice(k.gross)}</span></div><div class="dsc"><span>Korting</span><span>– ${fmtPrice(k.disc)}</span></div>` : "";
+  $("cartTotal").textContent = fmtPrice(k.net);
+  if ($("cashIn")) updateChange();
 }
-function openCart(){ $("cartMsg").textContent = ""; renderCart(); $("cartBackdrop").classList.add("show"); }
+function updateChange(){
+  const box = $("cashChange"), tot = cartTotal(), raw = $("cashIn").value.trim();
+  if (!raw){ box.className = "change"; box.innerHTML = "<span>Teruggeld</span><b>–</b>"; return; }
+  const got = parseMoney(raw) || 0, diff = Math.round((got - tot) * 100) / 100;
+  if (diff >= 0){ box.className = "change ok"; box.innerHTML = "<span>Teruggeld</span><b>" + fmtPrice(diff) + "</b>"; }
+  else { box.className = "change short"; box.innerHTML = "<span>Nog te betalen</span><b>" + fmtPrice(-diff) + "</b>"; }
+}
+$("cashIn").addEventListener("input", updateChange);
+$("cashQuick").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-v]"); if (!b) return;
+  const tot = cartTotal(); let v = b.dataset.v === "exact" ? tot : Number(b.dataset.v);
+  $("cashIn").value = String(Math.round(v * 100) / 100).replace(".", ","); updateChange();
+});
+function openCart(){ $("cartMsg").textContent = ""; $("cashIn").value = ""; updateChange(); renderCart(); $("cartBackdrop").classList.add("show"); }
 $("cartFab").addEventListener("click", openCart);
 $("closeCart").addEventListener("click", () => $("cartBackdrop").classList.remove("show"));
 $("cartBackdrop").addEventListener("click", (e) => { if (e.target.id === "cartBackdrop") e.currentTarget.classList.remove("show"); });
@@ -2734,11 +2823,18 @@ $("cartLines").addEventListener("click", (e) => {
   saveCart(); renderCart();
 });
 $("cartLines").addEventListener("change", (e) => {
-  const inp = e.target.closest("input[data-a=price]"); if (!inp) return;
+  const inp = e.target.closest("input[data-a]"); if (!inp) return;
   const l = cart[+inp.dataset.i]; if (!l) return;
-  l.price = parseMoney(inp.value); saveCart(); renderCart();
+  if (inp.dataset.a === "price") l.price = parseMoney(inp.value);
+  else if (inp.dataset.a === "disc"){ const v = parseMoney(inp.value); l.disc = v > 0 ? v : 0; }
+  else if (inp.dataset.a === "sel") l.sel = inp.checked;
+  else return;
+  saveCart(); renderCart();
 });
-$("cartClear").addEventListener("click", () => { cart = []; saveCart(); renderCart(); });
+$("grpAmt").addEventListener("input", () => { grpDisc = parseMoney($("grpAmt").value) || 0; const k = cartCalc(); $("cartSum").innerHTML = k.disc > 0 ? `<div><span>Subtotaal</span><span>${fmtPrice(k.gross)}</span></div><div class="dsc"><span>Korting</span><span>– ${fmtPrice(k.disc)}</span></div>` : ""; $("cartTotal").textContent = fmtPrice(k.net); updateChange(); });
+$("grpAll").addEventListener("click", () => { cart.forEach(l => { l.sel = true; }); saveCart(); renderCart(); });
+$("grpNone").addEventListener("click", () => { cart.forEach(l => { l.sel = false; }); saveCart(); renderCart(); });
+$("cartClear").addEventListener("click", () => { cart = []; grpDisc = 0; $("grpAmt").value = ""; saveCart(); renderCart(); });
 function cardLine(c){
   const o = c.orig || c;
   return { id: "c|" + nkey(o.name, o.set, o.number), type: "card", label: c.name, sub: c.set + " · " + (c.number || ""),
@@ -2758,15 +2854,17 @@ $("cartCheckout").addEventListener("click", async () => {
   const m = $("cartMsg"), b = $("cartCheckout"); b.disabled = true; m.className = "sf-msg"; m.textContent = "Bezig met afboeken…";
   cart.forEach(l => { delete l.err; });
   try {
-    const lines = cart.map(l => l.type === "item"
-      ? { type: "item", sheet: l.sheet, match: l.match, qty: l.qty, price: l.price }
-      : Object.assign({ type: "card", qty: l.qty, price: l.price }, l.match));
+    const calc = cartCalc();
+    const lines = cart.map((l, i) => { const u = Math.round(calc.per[i].unit * 10000) / 10000, d = calc.per[i].disc;
+      return l.type === "item"
+      ? { type: "item", sheet: l.sheet, match: l.match, qty: l.qty, price: l.price === null ? l.price : u, disc: d }
+      : Object.assign({ type: "card", qty: l.qty, price: l.price === null ? l.price : u, disc: d }, l.match); });
     const j = await apiCall({ action: "sellbatch", lines });
     const rest = [], total = { n: 0, eur: 0 }; let problems = 0;
     cart.forEach((l, i) => {
       const r = (j.results || [])[i];
       if (!r || !r.ok){ l.err = (r && r.error) || "Niet verwerkt"; rest.push(l); problems++; return; }
-      total.n += r.sold; total.eur += r.sold * (l.price || 0);
+      total.n += r.sold; total.eur += r.sold * (calc.per[i].unit || 0);
       if (l.type === "card"){
         afterWrite({ set: l.match.matchSet, number: l.match.matchNumber, name: l.match.matchName }, { qty: r.qty, vkp: r.vkp }, l.fields);
       } else {
@@ -2776,7 +2874,7 @@ $("cartCheckout").addEventListener("click", async () => {
       if (r.short){ l.qty = l.qty - r.sold; l.err = "Maar " + r.sold + " beschikbaar, de rest is niet afgeboekt."; rest.push(l); problems++; }
     });
     try { localStorage.setItem(COLL_CACHE_KEY, JSON.stringify(collections)); } catch(e){}
-    cart = rest; saveCart(); renderCart(); renderApp();
+    rest.forEach(l => { l.disc = 0; l.sel = false; }); cart = rest; saveCart(); if (!rest.length){ $("cashIn").value = ""; grpDisc = 0; $("grpAmt").value = ""; } renderCart(); renderApp();
     m.className = "sf-msg " + (problems ? "err" : "ok");
     m.textContent = okTxt(j, "Afgeboekt: " + total.n + " stuk(s), " + fmtPrice(total.eur) + (problems ? " – " + problems + " regel(s) niet volledig verwerkt." : " ✓"));
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
@@ -2794,12 +2892,38 @@ $("dayBtn").addEventListener("click", async () => {
     const tile = (v, l) => `<div class="day-tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
     const lines = (j.lines || []).slice().reverse().map(x =>
       `<div><span>${escapeHTML(x.time)} · ${x.type === "verkocht" ? "🟢" : "🔵"} ${x.qty}× ${escapeHTML(x.name || "")}</span><b>${fmtPrice(x.qty * x.price)}</b></div>`).join("");
-    out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}</div>` +
+    out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}${j.discount ? tile(fmtPrice(j.discount), "korting gegeven") : ""}</div>` +
       (lines ? `<div class="day-list">${lines}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen of aankopen op deze dag.</div>`) +
-      `<div class="export-row"><button class="btn btn-yellow" type="button" data-exp="csv">⬇ Download CSV</button><button class="btn btn-ghost" type="button" data-exp="copy">📋 Kopieer als tekst</button></div>`;
+      daySections(j) +
+      `<div class="export-row"><button class="btn btn-yellow" type="button" data-exp="share">📤 Deel dagafsluiting</button><button class="btn btn-ghost" type="button" data-exp="csv">⬇ Download CSV</button><button class="btn btn-ghost" type="button" data-exp="copy">📋 Kopieer als tekst</button></div>`;
     lastDay = j;
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
 });
+
+/* ---- v59: dagafsluiting ---- */
+function dayAgg(j){
+  const top = {}, sets = {};
+  (j.lines || []).forEach(x => { if (x.type !== "verkocht") return;
+    const k = (x.name || "") + "|" + (x.set || ""), t = top[k] || (top[k] = { name: x.name || "", set: x.set || "", qty: 0, eur: 0 });
+    t.qty += x.qty; t.eur += x.qty * x.price;
+    const st = sets[x.set || "?"] || (sets[x.set || "?"] = { set: x.set || "?", qty: 0, eur: 0 }); st.qty += x.qty; st.eur += x.qty * x.price; });
+  const by = (a, b) => b.eur - a.eur || b.qty - a.qty;
+  return { top: Object.values(top).sort(by).slice(0, 5), sets: Object.values(sets).sort(by).slice(0, 8) };
+}
+function daySections(j){
+  const a = dayAgg(j); if (!a.top.length) return "";
+  const avg = j.sold ? j.revenue / j.sold : 0;
+  return `<div class="day-h">🏆 Topverkopers</div><div class="day-list">${a.top.map(x => `<div><span>${x.qty}× ${escapeHTML(x.name)} <small style="color:var(--grey)">${escapeHTML(x.set)}</small></span><b>${fmtPrice(x.eur)}</b></div>`).join("")}</div>` +
+    `<div class="day-h">Per set</div><div class="day-list">${a.sets.map(x => `<div><span>${escapeHTML(x.set)} · ${x.qty}×</span><b>${fmtPrice(x.eur)}</b></div>`).join("")}</div>` +
+    `<div class="day-h">Gemiddelde verkoopprijs per kaart: ${fmtPrice(avg)}</div>`;
+}
+function dayCloseText(j){
+  const d = j.date.split("-").reverse().join("/"), a = dayAgg(j);
+  let t = "Pocketdrop dagafsluiting " + d + "\n\nOmzet: " + fmtPrice(j.revenue) + " (" + j.sold + " kaarten)\nInkoop: " + fmtPrice(j.cost) + " (" + j.bought + " kaarten)\nOmzet min inkoop: " + fmtPrice(j.revenue - j.cost) + "\n" + (j.discount ? "Korting gegeven: " + fmtPrice(j.discount) + "\n" : "");
+  if (a.top.length){ t += "\nTopverkopers:"; a.top.forEach((x, i) => { t += "\n" + (i + 1) + ". " + x.qty + "× " + x.name + " (" + x.set + ") " + fmtPrice(x.eur); }); }
+  if (a.sets.length){ t += "\n\nPer set:"; a.sets.forEach(x => { t += "\n" + x.set + ": " + x.qty + "× " + fmtPrice(x.eur); }); }
+  return t;
+}
 
 /* ---- v38: export dagoverzicht ---- */
 function csvCell(v){ v = String(v === null || v === undefined ? "" : v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
@@ -2830,6 +2954,11 @@ function dayExportText(j){
 }
 $("dayOut").addEventListener("click", async (e) => {
   const b = e.target.closest("button[data-exp]"); if (!b || !lastDay) return;
+  if (b.dataset.exp === "share"){
+    const t = dayCloseText(lastDay);
+    if (navigator.share){ try { await navigator.share({ title: "Pocketdrop dagafsluiting", text: t }); return; } catch(err){ if (err && err.name === "AbortError") return; } }
+    const ok = await copyText(t); b.textContent = ok ? "✓ Gekopieerd" : "Delen mislukt"; setTimeout(() => { b.textContent = "📤 Deel dagafsluiting"; }, 2000); return;
+  }
   if (b.dataset.exp === "csv"){ downloadCsv("pocketdrop-dag-" + lastDay.date + ".csv", dayExportRows(lastDay)); return; }
   const ok = await copyText(dayExportText(lastDay)); b.textContent = ok ? "✓ Gekopieerd" : "Kopiëren mislukt"; setTimeout(() => { b.textContent = "📋 Kopieer als tekst"; }, 2000);
 });
