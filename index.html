@@ -670,7 +670,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v63</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v65</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -834,6 +834,10 @@
         <div id="stOut"></div>
         </div>
         <div class="atab" data-tab="kaarten">
+        <div class="admin-section-title">Waarde van de catalogus</div>
+        <div id="catStats"></div>
+        <div class="admin-note">Alleen losse kaarten uit Blad1. Slabs en sealed tellen niet mee. De waarde is aantal × verkoopprijs.</div>
+        <hr class="admin-divider">
         <div class="admin-section-title">Bestaande kaart aanpassen</div>
         <div class="field">
           <input id="editSearchInput" type="text" placeholder="Zoek een kaart om aan te passen…" autocomplete="off">
@@ -1515,6 +1519,7 @@ function goHome(){
 
 function renderApp(){
   try { updateNetBar(); } catch(e){}
+  try { renderCatStats(); } catch(e){}
   const home = document.getElementById("homeView");
   const browse = document.getElementById("browseView");
   const collV = document.getElementById("collView");
@@ -3067,6 +3072,29 @@ $("dayBtn").addEventListener("click", async () => {
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
 });
 
+/* ---- v64: waarde en aantal van de catalogus (zonder slabs en sealed) ---- */
+function renderCatStats(){
+  const box = $("catStats"); if (!box || !adminUnlocked) return;
+  const cards = allCards.filter(c => !c.manual);
+  let value = 0, qty = 0, distinct = 0, noPrice = 0, lowestVal = 0, noLowest = 0;
+  const bySet = {};
+  cards.forEach(c => {
+    const q = c.qty === null || c.qty === undefined ? 0 : c.qty;
+    if (q < 1) return;
+    qty += q; distinct++;
+    const hasP = c.vkp !== null && c.vkp !== undefined;
+    if (hasP) value += q * c.vkp; else noPrice++;
+    if (c.lowest !== null && c.lowest !== undefined) lowestVal += q * c.lowest; else noLowest++;
+    const st = setOf(c), e = bySet[st] || (bySet[st] = { set: st, qty: 0, value: 0, cm: 0 });
+    e.qty += q; if (hasP) e.value += q * c.vkp;
+    if (c.lowest !== null && c.lowest !== undefined) e.cm += q * c.lowest;
+  });
+  const tile = (v, l) => `<div class="day-tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  const rows = Object.values(bySet).sort((a, b) => b.value - a.value);
+  box.innerHTML = `<div class="day-tiles">${tile(fmtPrice(value), "Totale verkoopwaarde<br>aantal × verkoopprijs")}${tile(fmtPrice(lowestVal), "Totale CM waarde<br>aantal × Cardmarket richtprijs")}${tile(qty, "kaarten in bezit")}${tile(distinct, "verschillende kaarten")}</div>` +
+    (noPrice ? `<div style="color:var(--grey);font-size:12px;">${noPrice} kaart(en) in bezit hebben geen verkoopprijs en tellen niet mee in de verkoopwaarde.</div>` : "") + (noLowest ? `<div style="color:var(--grey);font-size:12px;">${noLowest} kaart(en) in bezit hebben geen Cardmarket richtprijs en tellen niet mee in de CM waarde.</div>` : "") +
+    (rows.length ? `<details style="margin-top:8px;"><summary style="cursor:pointer;font-weight:700;font-size:14px;">Per set</summary><div class="day-list">${rows.map(r => `<div><span>${escapeHTML(r.set)} · ${r.qty}×</span><b>${fmtPrice(r.value)} <small style="font-weight:400;color:var(--grey)">· CM ${fmtPrice(r.cm)}</small></b></div>`).join("")}</div></details>` : "");
+}
 /* ---- v61: dagafsluiting met bonnen, betaalwijze, winst en kas ---- */
 function kasState(date){ try { return JSON.parse(localStorage.getItem(KAS_PREFIX + date) || "{}") || {}; } catch(e){ return {}; } }
 function kasCalc(j){
@@ -3589,6 +3617,7 @@ function closeAdmin(){
   document.getElementById("editSearchResults").innerHTML = "";
 }
 function showAdminContent(){
+  try { renderCatStats(); } catch(e){}
   document.getElementById("pinGate").style.display = "none";
   document.getElementById("adminContent").style.display = "";
   renderSetList();
