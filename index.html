@@ -602,6 +602,87 @@
   .net-bar{ position:sticky; top:0; z-index:30; height:30px; line-height:30px; text-align:center; font-size:13px; font-weight:700; background:#FFCB05; color:#10181C; padding:0 12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:default; }
   .net-bar.warn{ background:#B3261E; color:#fff; cursor:pointer; }
   body.has-netbar header.top{ top:30px; }
+  /* ==========================================================
+     v67 — Pokémon-sfeer: kaartranden, holo-glans
+     (alleen eigen vormgeving; geen officiële figuren of logo's)
+     ========================================================== */
+  :root{
+    --ring: linear-gradient(135deg,#FDDC00 0%,#FFB300 28%,#0B67A7 70%,#3AA0DD 100%);
+    --pop: 0 3px 0 rgba(8,79,128,.35), 0 8px 18px rgba(11,60,90,.18);
+  }
+  body{
+    background:
+      radial-gradient(circle at 12% 8%, rgba(253,220,0,.16) 0 120px, transparent 121px),
+      radial-gradient(circle at 92% 30%, rgba(58,160,221,.16) 0 170px, transparent 171px),
+      radial-gradient(circle at 20% 78%, rgba(123,207,243,.20) 0 150px, transparent 151px),
+      var(--cream);
+    background-attachment:fixed;
+  }
+  /* header: dieper blauw met glinsterende sterren en een gele rand */
+  header.top{
+    background:
+      linear-gradient(180deg,#5CC0F0 0%,#2E93D6 70%,#1F7FC4 100%);
+    border-bottom:3px solid var(--yellow);
+    box-shadow:0 4px 0 rgba(8,79,128,.18), 0 10px 22px rgba(11,60,90,.18);
+  }
+  .search-box input{ border-radius:999px; box-shadow:0 3px 0 rgba(8,79,128,.25), inset 0 0 0 2px rgba(255,255,255,.9); padding-left:46px; font-weight:600; }
+  .search-box svg{ left:18px; }
+  .chip{ background:rgba(255,255,255,.55); border:2px solid rgba(255,255,255,.85); box-shadow:0 2px 0 rgba(8,79,128,.22); transition:transform .15s ease, box-shadow .15s ease; }
+  .chip:active{ transform:translateY(2px); box-shadow:none; }
+  .chip.active{ background:linear-gradient(180deg,#FFE94D,#FDDC00 60%,#F2C800); border-color:#fff; color:#10181C; box-shadow:0 2px 0 #B89A00, 0 0 0 3px rgba(253,220,0,.35), 0 6px 14px rgba(253,220,0,.35); transform:translateY(-1px); }
+  .icon-btn{ box-shadow:0 2px 0 rgba(8,79,128,.25); }
+
+  /* generaties: afgeronde balken in de huisstijl-blauw */
+  .era-head{ --ec1:#1E88E5; --ec2:#3DA5F0; --etxt:#fff; position:relative; overflow:hidden; background:linear-gradient(100deg,var(--ec1),var(--ec2)) !important; color:var(--etxt) !important; border-radius:14px !important; padding:10px 16px !important; box-shadow:0 3px 0 rgba(0,0,0,.14), 0 8px 16px rgba(11,60,90,.12); }
+    .era-head::after{ content:""; position:absolute; right:-30px; top:-40px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.35),transparent 70%); pointer-events:none; }
+
+  /* setkaarten: als boosterpack met glans */
+  .set-tile{ border:2px solid transparent; background:linear-gradient(#fff,#fff) padding-box, var(--ring) border-box; border-radius:18px; box-shadow:var(--pop); }
+  .set-tile:hover{ transform:translateY(-3px) rotate(-.4deg); }
+  .set-tile .logo-wrap{ background:
+      linear-gradient(135deg,#BFE6FA 0%,#E9F7FF 45%,#FFF6BF 100%); position:relative; }
+  .set-tile .logo-wrap::after{ content:""; position:absolute; inset:0; background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.65) 48%,transparent 60%); transform:translateX(-120%); transition:transform .7s ease; pointer-events:none; }
+  .set-tile:hover .logo-wrap::after, .set-tile:active .logo-wrap::after{ transform:translateX(120%); }
+  .set-tile .logo-fallback{ font-size:20px; text-shadow:0 2px 0 rgba(255,255,255,.8); }
+  .set-tile .set-info{ border-top:2px solid rgba(253,220,0,.55); }
+  .set-tile .set-count{ display:inline-block; margin-top:4px; padding:2px 10px; border-radius:999px; background:var(--cream-alt); color:var(--water-deep); font-weight:800; }
+
+  /* kaarten: gouden kaartrand, holo-glans en prijs-badge */
+  .tile{ border:3px solid transparent; background:linear-gradient(#fff,#fff) padding-box, var(--ring) border-box; border-radius:18px; box-shadow:var(--pop); }
+  .tile:hover{ transform:translateY(-3px); }
+  .tile .foil{ display:none; }
+  .tile .img-wrap{ margin:8px 8px 0; border-radius:10px; background:
+      radial-gradient(120% 90% at 50% 15%,#FFFFFF 0%,#DDF1FD 55%,#BFE3F6 100%); box-shadow:inset 0 0 0 2px rgba(11,103,167,.12); }
+  .tile .img-wrap::after{ content:""; position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .25s ease;
+      background:conic-gradient(from 210deg at 30% 20%, rgba(255,80,160,.28), rgba(255,220,60,.30), rgba(80,220,200,.28), rgba(110,130,255,.30), rgba(255,80,160,.28)); mix-blend-mode:soft-light; }
+  .tile:hover .img-wrap::after, .tile:active .img-wrap::after{ opacity:1; }
+  .tile:active{ transform:scale(.97) rotate(.3deg); }
+  .stock-badge{ background:linear-gradient(180deg,#1B8AD8,#0B67A7); border:2px solid #fff; box-shadow:0 2px 0 rgba(0,0,0,.2); font-size:11px; padding:3px 9px; }
+  .tile .name-line{ font-size:16.5px; font-weight:700; }
+  .tile .set-line{ color:var(--water-deep); }
+  .price-tag{ background:linear-gradient(180deg,#FFE94D,#FDDC00); color:#10181C !important; padding:2px 12px 3px; border-radius:999px; box-shadow:0 2px 0 #B89A00; font-size:17px; }
+  .tile.rare-gold, .tile.rare-holo{ animation:none; }
+
+  /* hero: sterrenregen */
+  .hero{ background-image:
+      linear-gradient(135deg,#0B6BAE 0%,#1E9BE0 55%,#5CC3F3 100%);
+      box-shadow:0 5px 0 rgba(8,79,128,.3), 0 14px 28px rgba(11,60,90,.22); border:3px solid #fff; }
+  .hero h1{ font-size:32px; }
+  .hero .hero-photo{ box-shadow:0 0 0 4px var(--yellow), 0 10px 22px rgba(0,0,0,.28); border-color:#fff; }
+
+  /* knoppen: ingedrukt-effect zoals in een spel */
+  .btn{ border-radius:14px; font-weight:800; transition:transform .12s ease, box-shadow .12s ease; }
+  .btn-primary{ background:linear-gradient(180deg,#1B8AD8,#0B67A7); box-shadow:0 4px 0 #084F80; }
+  .btn-yellow{ background:linear-gradient(180deg,#FFE94D,#FDDC00); color:#10181C; box-shadow:0 4px 0 #B89A00; }
+  .btn-primary:active, .btn-yellow:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.3); }
+
+  /* kaartpagina */
+  .modal{ border:3px solid transparent; background:linear-gradient(#fff,#fff) padding-box, var(--ring) border-box; }
+  .modal-img{ background:radial-gradient(circle at 50% 25%,#FFFFFF 0%,#DDF1FD 50%,#FFF3A8 100%) !important; border:3px solid rgba(253,220,0,.9); box-shadow:0 0 0 3px #fff, 0 10px 22px rgba(11,60,90,.25), 0 0 26px rgba(253,220,0,.45); }
+  .detail-cell{ border:2px solid rgba(11,103,167,.12); background:linear-gradient(180deg,#F2FAFF,#DCF0FB); border-radius:14px; }
+  .detail-cell .label{ color:var(--water-deep); }
+  .cart-fab{ box-shadow:0 4px 0 #084F80, 0 12px 24px rgba(11,60,90,.3); border:3px solid #fff; }
+  @media (prefers-reduced-motion: reduce){ .set-tile .logo-wrap::after, .tile .img-wrap::after{ transition:none; } }
 </style>
 </head>
 <body>
@@ -670,7 +751,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v66</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v67</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -3620,6 +3701,7 @@ function cleanOldStorage(){
   } catch(e){}
 }
 cleanOldStorage();
+
 
 loadFromCache();
 fetchData(!!csvCards.length);
