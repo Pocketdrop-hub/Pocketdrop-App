@@ -636,7 +636,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v57</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v58</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -2143,8 +2143,10 @@ function renderStaffPanel(){
   { const w = $("modalLowestWrap"), show = adminUnlocked && c && c.lowest !== null && c.lowest !== undefined;
     if (w){ w.style.display = show ? "" : "none"; $("modalLowest").textContent = show ? fmtPrice(c.lowest) : ""; } }
   if (!adminUnlocked || !c) return;
-  { const a = $("sfCm"), u = String(c.cmLink || "").trim(), ok = /^https?:\/\//i.test(u);
-    a.style.display = ok ? "block" : "none"; a.href = ok ? u : "#"; }
+  { const a = $("sfCm"), raw = String(c.cmLink || ""), m = raw.match(/https?:\/\/[^\s"'<>]+/i);
+    const direct = !!m, url = direct ? m[0] : "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + encodeURIComponent((c.name || "") + " " + (c.number || "")).replace(/%20/g, "+");
+    a.style.display = c.manual ? "none" : "block"; a.href = url;
+    a.textContent = direct ? "🔗 Bekijk op Cardmarket ↗" : "🔎 Zoek op Cardmarket ↗"; }
   $("staffManualNote").style.display = c.manual ? "" : "none";
   $("staffEdit").style.display = c.manual ? "none" : "";
   if (c.manual) return;
