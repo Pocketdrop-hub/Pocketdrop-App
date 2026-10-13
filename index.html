@@ -265,6 +265,22 @@
   .grp-disc button{ padding:8px 10px; border-radius:8px; border:0; background:#fff; font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,.15); cursor:pointer; }
   .cart-sum{ font-size:14px; padding:10px 0 0; } .cart-sum div{ display:flex; justify-content:space-between; padding:2px 0; } .cart-sum .dsc{ color:#c62828; }
   .buyavg{ background:var(--cream-alt); border-radius:10px; padding:8px 12px; margin:0 0 10px; font-size:14px; display:flex; justify-content:space-between; gap:8px; }
+  .trade-box{ background:var(--cream-alt); border-radius:12px; padding:10px 12px; margin:10px 0 0; }
+  .trade-box .cart-line{ border-bottom:1px solid rgba(0,0,0,.08); grid-template-columns:1fr; }
+  .trade-box input[type=text]{ padding:7px; border-radius:8px; border:1px solid rgba(0,0,0,.15); font-size:14px; box-sizing:border-box; }
+  .trade-box select{ padding:7px; border-radius:8px; border:1px solid rgba(0,0,0,.15); font-size:14px; }
+  .trade-res div{ cursor:pointer; }
+  .refund{ background:#fff3e0; border-radius:12px; padding:12px; margin:8px 0; font-size:18px; font-weight:800; display:flex; justify-content:space-between; }
+  .payrow{ display:flex; gap:6px; margin:10px 0 4px; }
+  .payrow button{ flex:1 1 0; padding:11px 6px; border-radius:10px; border:2px solid transparent; background:var(--cream-alt); font-weight:800; font-size:14px; cursor:pointer; }
+  .payrow button.on{ border-color:var(--blue,#0a67ac); background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.18); }
+  .lastsale{ background:var(--cream-alt); border-radius:12px; padding:10px 12px; margin:10px 0; font-size:14px; }
+  .lastsale .btn{ width:100%; margin-top:8px; }
+  .kasbox{ background:var(--cream-alt); border-radius:12px; padding:10px 12px; margin:8px 0; }
+  .kasbox .field-row{ display:flex; gap:8px; } .kasbox input[type=text]{ width:100%; padding:9px; font-size:16px; border-radius:8px; border:1px solid rgba(0,0,0,.15); box-sizing:border-box; }
+  .kasbox label.chk{ display:flex; gap:6px; align-items:center; font-size:13px; margin:8px 0 2px; }
+  .kasres div{ display:flex; justify-content:space-between; padding:3px 0; font-size:14px; } .kasres .diff{ font-weight:800; font-size:17px; border-top:1px solid rgba(0,0,0,.1); margin-top:4px; padding-top:6px; }
+  .kasres .diff.ok b{ color:#1a8f3c; } .kasres .diff.bad b{ color:#c62828; }
   .kassa{ background:var(--cream-alt); border-radius:14px; padding:12px; margin:4px 0 12px; }
   .kassa label{ font-size:12px; color:var(--grey); font-weight:700; display:block; margin-bottom:4px; }
   .kassa input{ width:100%; font-size:22px; font-weight:800; padding:10px 12px; border-radius:10px; border:2px solid rgba(0,0,0,.12); box-sizing:border-box; }
@@ -654,7 +670,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v60</span>
+  <span class="star">★</span> Pocketdrop — de magie van Pokémon-kaarten, op elke beurs. <span style="opacity:.6">v63</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -789,6 +805,9 @@
         <div class="admin-note">Bestaat de kaart al in de sheet, dan wordt het aantal opgehoogd. Anders komt er een nieuwe rij bij. Alles wordt gelogd in het tabblad "Log".</div>
 
         
+        <hr class="admin-divider">
+        <div class="admin-section-title">Laatste verkoop</div>
+        <div class="lastsale" id="adminLast"></div>
         <hr class="admin-divider">
         <div class="admin-section-title">Dagafsluiting</div>
         <div class="field-row">
@@ -973,13 +992,25 @@
     <div class="modal-body" style="padding-top:22px;">
       <h3 style="font-family:var(--font-display);margin:0 0 6px;">Winkelmandje</h3>
       <div id="cartLines"></div>
+      <div class="trade-box" id="tradeBox">
+        <button type="button" class="btn btn-ghost" id="tradeToggle" style="width:100%;">🔄 Ruil: klant geeft kaarten</button>
+        <div id="tradeBody" style="display:none;margin-top:8px;">
+          <input id="tCat" type="text" placeholder="Zoek de kaart van de klant (bv. pikachu 025)" autocomplete="off" style="width:100%;">
+          <div id="tCatRes" class="day-list trade-res" style="margin:6px 0;"></div>
+          <button type="button" class="btn btn-ghost" id="tradeManual" style="width:100%;margin-bottom:4px;">+ Kaart handmatig toevoegen</button>
+          <div id="tradeLines"></div>
+          <div style="color:var(--grey);font-size:12px;margin-top:6px;">Vul de <b>ruilwaarde per stuk</b> in. Kaarten "In voorraad" komen in de sheet; kaarten voor je eigen collectie niet.</div>
+        </div>
+      </div>
       <div class="grp-disc" id="grpDisc">
         <b>Korting op meerdere kaarten</b> <span id="grpInfo" style="color:var(--grey)"></span>
         <div class="row"><input id="grpAmt" type="text" inputmode="decimal" placeholder="€ korting"><button type="button" id="grpAll">Alles selecteren</button><button type="button" id="grpNone">Niets</button></div>
         <div style="color:var(--grey);font-size:12px;margin-top:4px;">Vink hierboven de kaarten aan. De korting wordt eerlijk verdeeld over die kaarten.</div>
       </div>
       <div class="cart-sum" id="cartSum"></div>
-      <div class="cart-total"><span>Te betalen</span><span id="cartTotal">€0,00</span></div>
+      <div class="cart-total"><span id="cartTotLabel">Te betalen</span><span id="cartTotal">€0,00</span></div>
+      <div class="refund" id="refundBox" style="display:none;"></div>
+      <div class="payrow" id="payRow"><button type="button" data-p="Cash">💶 Cash</button><button type="button" data-p="Bancontact">💳 Bancontact</button></div>
       <div class="kassa" id="kassa">
         <label for="cashIn">Ontvangen van klant (€)</label>
         <input id="cashIn" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
@@ -989,6 +1020,7 @@
       <button class="btn btn-primary" id="cartCheckout" type="button" style="width:100%;">Verkoop afronden (alles afboeken)</button>
       <button class="btn btn-ghost" id="cartClear" type="button" style="width:100%;margin-top:8px;">Mandje leegmaken</button>
       <div class="sf-msg" id="cartMsg"></div>
+      <div class="lastsale" id="cartLast" style="display:none;"></div>
     </div>
   </div>
 </div>
@@ -2736,6 +2768,7 @@ updateScanBtn();
 
 /* ---- winkelmandje ---- */
 const CART_KEY = "pocketdrop_cart_v1";
+const TRADE_KEY = "pocketdrop_trade_v1", PAY_KEY = "pocketdrop_pay_v1", LASTSALE_KEY = "pocketdrop_lastsale_v1", KAS_PREFIX = "pocketdrop_kas_";
 let cart = [];
 try { cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]"); if (!Array.isArray(cart)) cart = []; } catch(e){ cart = []; }
 function saveCart(){ try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch(e){} updateCartFab(); }
@@ -2750,6 +2783,120 @@ function cartAdd(line){
   else cart.push(line);
   saveCart(); toast("In mandje: " + line.label);
 }
+let trade = [], tradeOpen = false;
+try { trade = JSON.parse(localStorage.getItem(TRADE_KEY) || "[]"); if (!Array.isArray(trade)) trade = []; } catch(e){ trade = []; }
+function saveTrade(){ try { localStorage.setItem(TRADE_KEY, JSON.stringify(trade)); } catch(e){} }
+function tradeTotal(){ return Math.round(trade.reduce((a, t) => a + (t.qty || 0) * (t.value || 0), 0) * 100) / 100; }
+function dueAmount(){ return Math.round((cartTotal() - tradeTotal()) * 100) / 100; }
+function effPay(){ return dueAmount() < 0 ? "Cash" : payMethod; }
+function renderTrade(){
+  const open = tradeOpen || trade.length > 0, n = trade.reduce((a, t) => a + (t.qty || 0), 0);
+  $("tradeBody").style.display = open ? "" : "none";
+  $("tradeToggle").textContent = "🔄 Ruil: klant geeft kaarten" + (n ? " (" + n + ")" : "");
+  $("tradeLines").innerHTML = trade.map((t, i) => `
+    <div class="cart-line">
+      <div>${t.manual ? `<input type="text" data-t="name" data-i="${i}" value="${escapeHTML(t.name)}" placeholder="Kaartnaam" style="width:100%;margin-bottom:4px;"><div style="display:flex;gap:4px;"><input type="text" data-t="set" data-i="${i}" value="${escapeHTML(t.set)}" placeholder="Set" list="setList" style="flex:2;min-width:0;"><input type="text" data-t="number" data-i="${i}" value="${escapeHTML(t.number)}" placeholder="Nr" style="flex:1;min-width:0;"></div>` : `<div class="cl-name">${escapeHTML(t.name)}</div><div class="cl-sub">${escapeHTML(t.set)} · ${escapeHTML(t.number)}</div>`}</div>
+      <div class="cl-ctl">
+        <button type="button" data-ta="minus" data-i="${i}">−</button><b>${t.qty}</b><button type="button" data-ta="plus" data-i="${i}">+</button>
+        <input type="text" inputmode="decimal" data-t="value" data-i="${i}" value="${t.value === null || t.value === undefined ? "" : String(t.value).replace(".", ",")}" placeholder="waarde €">
+        <button type="button" data-ta="del" data-i="${i}">🗑</button>
+      </div>
+      <div class="cl-disc"><select data-t="mode" data-i="${i}"><option value="stock"${t.mode === "own" ? "" : " selected"}>📦 In voorraad</option><option value="own"${t.mode === "own" ? " selected" : ""}>⭐ Eigen collectie</option></select></div>
+    </div>`).join("");
+}
+$("tradeToggle").addEventListener("click", () => { tradeOpen = !(tradeOpen || trade.length > 0) ; renderTrade(); });
+$("tradeManual").addEventListener("click", () => { trade.push({ set: "", number: "", name: "", qty: 1, value: null, mode: "stock", manual: true }); tradeOpen = true; saveTrade(); renderTrade(); renderCart(); });
+$("tradeLines").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-ta]"); if (!b) return;
+  const i = +b.dataset.i, t = trade[i]; if (!t) return;
+  if (b.dataset.ta === "plus") t.qty++; else if (b.dataset.ta === "minus"){ if (t.qty > 1) t.qty--; } else trade.splice(i, 1);
+  saveTrade(); renderTrade(); renderCart();
+});
+$("tradeLines").addEventListener("change", (e) => {
+  const inp = e.target.closest("[data-t]"); if (!inp) return;
+  const t = trade[+inp.dataset.i]; if (!t) return;
+  const k = inp.dataset.t;
+  if (k === "value"){ const v = parseMoney(inp.value); t.value = v === null || v < 0 ? null : v; }
+  else if (k === "mode") t.mode = inp.value;
+  else t[k] = inp.value.trim();
+  saveTrade(); renderTrade(); renderCart();
+});
+let tCatTimer = null;
+$("tCat").addEventListener("input", () => {
+  clearTimeout(tCatTimer);
+  const box = $("tCatRes"), v = $("tCat").value.trim();
+  if (v.length < 2){ box.innerHTML = ""; return; }
+  tCatTimer = setTimeout(async () => {
+    box.innerHTML = '<div style="color:var(--grey)">Zoeken…</div>';
+    try {
+      const m = v.match(/^(.*?)\s*(\d{1,3}[a-z]?)$/i);
+      const j = m && m[1] ? await catSearch(m[1], m[2]) : await catSearch(v, "");
+      if (j.empty){ box.innerHTML = '<div style="color:var(--grey)">Catalogus is nog leeg. Voeg de kaart handmatig toe.</div>'; return; }
+      const items = j.items.slice(0, 15);
+      box.innerHTML = items.length ? items.map((x, i) => `<div data-i="${i}"><span>${escapeHTML(x.name)} · ${escapeHTML(x.set)}</span><b>${escapeHTML(x.number)}</b></div>`).join("") : '<div style="color:var(--grey)">Niets gevonden. Voeg de kaart handmatig toe.</div>';
+      box._items = items;
+    } catch(err){ box.innerHTML = '<div style="color:#b3261e">' + escapeHTML(err.message || String(err)) + ' (offline? voeg handmatig toe)</div>'; }
+  }, 350);
+});
+$("tCatRes").addEventListener("click", (e) => {
+  const d = e.target.closest("div[data-i]"); if (!d) return;
+  const x = $("tCatRes")._items && $("tCatRes")._items[+d.dataset.i]; if (!x) return;
+  const ex = trade.find(t => !t.manual && nkey(t.name, t.set, t.number) === nkey(x.name, x.set, x.number));
+  if (ex) ex.qty++; else trade.push({ set: x.set, number: x.number, name: x.name, qty: 1, value: null, mode: "stock", manual: false });
+  $("tCatRes").innerHTML = ""; $("tCat").value = ""; tradeOpen = true; saveTrade(); renderTrade(); renderCart();
+});
+let payMethod = "Cash";
+try { const pv = localStorage.getItem(PAY_KEY); if (pv === "Cash" || pv === "Bancontact") payMethod = pv; } catch(e){}
+function renderPay(){
+  const due = dueAmount(), ep = effPay();
+  document.querySelectorAll("#payRow button").forEach(b => b.classList.toggle("on", b.dataset.p === ep));
+  $("payRow").style.opacity = due < 0 ? ".45" : "";
+  $("kassa").style.display = (ep === "Cash" && due > 0) ? "" : "none";
+  const rf = $("refundBox");
+  if (due < 0){ rf.style.display = ""; rf.innerHTML = "<span>Geef de klant terug (cash)</span><b>" + fmtPrice(-due) + "</b>"; }
+  else if (due === 0 && cart.length && trade.length){ rf.style.display = ""; rf.innerHTML = "<span>Geen betaling nodig</span><b>" + fmtPrice(0) + "</b>"; }
+  else rf.style.display = "none";
+}
+$("payRow").addEventListener("click", (e) => { const b = e.target.closest("button[data-p]"); if (!b || dueAmount() < 0) return; payMethod = b.dataset.p; try { localStorage.setItem(PAY_KEY, payMethod); } catch(x){} renderPay(); });
+let lastSale = null;
+try { lastSale = JSON.parse(localStorage.getItem(LASTSALE_KEY) || "null"); } catch(e){ lastSale = null; }
+function saveLastSale(){ try { if (lastSale) localStorage.setItem(LASTSALE_KEY, JSON.stringify(lastSale)); else localStorage.removeItem(LASTSALE_KEY); } catch(e){} renderLastSale(); }
+function bonShort(b){ return b ? "#" + String(b).split("-").pop() : ""; }
+function renderLastSale(){
+  const html = !lastSale ? "" : `<div><b>Laatste verkoop${lastSale.bon ? " " + bonShort(lastSale.bon) : ""}</b> · ${new Date(lastSale.at).toTimeString().slice(0, 5)} · ${lastSale.n} stuk(s) · ${fmtPrice(lastSale.eur)} · ${escapeHTML(lastSale.pay || "")}</div>` +
+    `<div style="color:var(--grey);font-size:12px;margin-top:2px;">${lastSale.lines.map(l => l.sold + "× " + escapeHTML(l.label)).join(", ")}</div>` +
+    ((lastSale.trade || []).length ? `<div style="color:var(--grey);font-size:12px;margin-top:2px;">🔄 Ruil: ${lastSale.trade.map(t => t.qty + "× " + escapeHTML(t.name) + (t.mode === "own" ? " (eigen)" : "")).join(", ")}${lastSale.due < 0 ? " · " + fmtPrice(-lastSale.due) + " teruggegeven" : ""}</div>` : "") +
+    (lastSale.bon ? `<button type="button" class="btn btn-ghost" data-undo="1">↩ Deze verkoop terugdraaien</button>` : `<div style="color:var(--grey);font-size:12px;margin-top:6px;">Terugdraaien kan pas zodra de verkoop is doorgestuurd naar de sheet.</div>`);
+  const c = $("cartLast"); if (c){ c.innerHTML = html; c.style.display = html ? "" : "none"; }
+  const a = $("adminLast"); if (a) a.innerHTML = html || '<span style="color:var(--grey);font-size:13px;">Nog geen verkoop op dit toestel.</span>';
+}
+async function undoLastSale(btn){
+  if (!lastSale || !lastSale.bon) return;
+  if (!confirm("Verkoop " + bonShort(lastSale.bon) + " terugdraaien? De kaarten komen terug in de voorraad en de omzet wordt gecorrigeerd.")) return;
+  btn.disabled = true; const m = $("cartMsg");
+  try {
+    const j = await apiCall({ action: "undosale", bon: lastSale.bon });
+    let bad = 0;
+    (j.results || []).forEach((r, i) => {
+      const l = lastSale.lines[i]; if (!l) return;
+      if (!r || !r.ok){ bad++; return; }
+      if (l.type === "card") afterWrite({ set: l.match.matchSet, number: l.match.matchNumber, name: l.match.matchName }, { qty: r.qty, vkp: r.vkp }, l.fields);
+      else { const it = (collections[l.sheet] || []).find(x => JSON.stringify(itemMatch(l.sheet, x)) === JSON.stringify(l.match)); if (it) it.aantal = String(r.qty); }
+    });
+    (lastSale.trade || []).forEach((t, i) => {
+      if (t.mode === "own") return; const r = (j.tradeResults || [])[i];
+      if (!r || !r.ok){ bad++; return; }
+      afterWrite({ set: t.set, number: t.number, name: t.name }, { qty: r.qty, vkp: r.vkp }, { set: t.set, number: t.number, name: t.name, cond: t.cond || "Near Mint" });
+    });
+    try { localStorage.setItem(COLL_CACHE_KEY, JSON.stringify(collections)); } catch(e){}
+    lastSale = null; saveLastSale(); renderApp();
+    toast(bad ? "Teruggedraaid, maar " + bad + " regel(s) konden niet hersteld worden." : "Verkoop teruggedraaid ✓");
+    if (m){ m.className = "sf-msg " + (bad ? "err" : "ok"); m.textContent = bad ? "Niet alles kon hersteld worden, controleer de voorraad." : "Verkoop teruggedraaid ✓"; }
+  } catch(err){ toast(err.message || String(err)); if (m){ m.className = "sf-msg err"; m.textContent = err.message || String(err); } }
+  btn.disabled = false;
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("button[data-undo]"); if (b) undoLastSale(b); });
+renderLastSale();
 let grpDisc = 0;
 function cartGross(){ return cart.reduce((a, l) => a + l.qty * (l.price || 0), 0); }
 /* korting: per kaart (l.disc, in euro voor die regel) + groepskorting verdeeld over aangevinkte regels */
@@ -2793,12 +2940,18 @@ function renderCart(){
   const k = cartCalc(), nsel = cart.filter(l => l.sel).length;
   $("grpInfo").textContent = "· " + nsel + " aangevinkt";
   $("grpDisc").style.display = cart.length > 1 ? "" : "none";
-  $("cartSum").innerHTML = k.disc > 0 ? `<div><span>Subtotaal</span><span>${fmtPrice(k.gross)}</span></div><div class="dsc"><span>Korting</span><span>– ${fmtPrice(k.disc)}</span></div>` : "";
-  $("cartTotal").textContent = fmtPrice(k.net);
+  renderTotals();
   if ($("cashIn")) updateChange();
 }
+function renderTotals(){
+  const k = cartCalc(), tt = tradeTotal(), due = Math.round((k.net - tt) * 100) / 100;
+  $("cartSum").innerHTML = (k.disc > 0 || tt > 0) ? `<div><span>Subtotaal</span><span>${fmtPrice(k.gross)}</span></div>` + (k.disc > 0 ? `<div class="dsc"><span>Korting</span><span>– ${fmtPrice(k.disc)}</span></div>` : "") + (tt > 0 ? `<div class="dsc"><span>Ruilwaarde klant</span><span>– ${fmtPrice(tt)}</span></div>` : "") : "";
+  $("cartTotLabel").textContent = due < 0 ? "Terug te geven" : "Te betalen";
+  $("cartTotal").textContent = fmtPrice(Math.abs(due));
+  renderPay();
+}
 function updateChange(){
-  const box = $("cashChange"), tot = cartTotal(), raw = $("cashIn").value.trim();
+  const box = $("cashChange"), tot = dueAmount(), raw = $("cashIn").value.trim();
   if (!raw){ box.className = "change"; box.innerHTML = "<span>Teruggeld</span><b>–</b>"; return; }
   const got = parseMoney(raw) || 0, diff = Math.round((got - tot) * 100) / 100;
   if (diff >= 0){ box.className = "change ok"; box.innerHTML = "<span>Teruggeld</span><b>" + fmtPrice(diff) + "</b>"; }
@@ -2807,10 +2960,10 @@ function updateChange(){
 $("cashIn").addEventListener("input", updateChange);
 $("cashQuick").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-v]"); if (!b) return;
-  const tot = cartTotal(); let v = b.dataset.v === "exact" ? tot : Number(b.dataset.v);
+  const tot = Math.max(0, dueAmount()); let v = b.dataset.v === "exact" ? tot : Number(b.dataset.v);
   $("cashIn").value = String(Math.round(v * 100) / 100).replace(".", ","); updateChange();
 });
-function openCart(){ $("cartMsg").textContent = ""; $("cashIn").value = ""; updateChange(); renderCart(); $("cartBackdrop").classList.add("show"); }
+function openCart(){ renderTrade(); renderLastSale(); $("cartMsg").textContent = ""; $("cashIn").value = ""; updateChange(); renderCart(); $("cartBackdrop").classList.add("show"); }
 $("cartFab").addEventListener("click", openCart);
 $("closeCart").addEventListener("click", () => $("cartBackdrop").classList.remove("show"));
 $("cartBackdrop").addEventListener("click", (e) => { if (e.target.id === "cartBackdrop") e.currentTarget.classList.remove("show"); });
@@ -2831,10 +2984,10 @@ $("cartLines").addEventListener("change", (e) => {
   else return;
   saveCart(); renderCart();
 });
-$("grpAmt").addEventListener("input", () => { grpDisc = parseMoney($("grpAmt").value) || 0; const k = cartCalc(); $("cartSum").innerHTML = k.disc > 0 ? `<div><span>Subtotaal</span><span>${fmtPrice(k.gross)}</span></div><div class="dsc"><span>Korting</span><span>– ${fmtPrice(k.disc)}</span></div>` : ""; $("cartTotal").textContent = fmtPrice(k.net); updateChange(); });
+$("grpAmt").addEventListener("input", () => { grpDisc = parseMoney($("grpAmt").value) || 0; renderTotals(); updateChange(); });
 $("grpAll").addEventListener("click", () => { cart.forEach(l => { l.sel = true; }); saveCart(); renderCart(); });
 $("grpNone").addEventListener("click", () => { cart.forEach(l => { l.sel = false; }); saveCart(); renderCart(); });
-$("cartClear").addEventListener("click", () => { cart = []; grpDisc = 0; $("grpAmt").value = ""; saveCart(); renderCart(); });
+$("cartClear").addEventListener("click", () => { cart = []; trade = []; saveTrade(); grpDisc = 0; $("grpAmt").value = ""; saveCart(); renderTrade(); renderCart(); });
 function cardLine(c){
   const o = c.orig || c;
   return { id: "c|" + nkey(o.name, o.set, o.number), type: "card", label: c.name, sub: c.set + " · " + (c.number || ""),
@@ -2851,7 +3004,9 @@ $("itCart").addEventListener("click", () => {
 });
 $("cartCheckout").addEventListener("click", async () => {
   if (!cart.length) return;
-  const m = $("cartMsg"), b = $("cartCheckout"); b.disabled = true; m.className = "sf-msg"; m.textContent = "Bezig met afboeken…";
+  const m = $("cartMsg"), b = $("cartCheckout");
+  if (trade.some(t => !t.name || (t.mode !== "own" && !t.set) || t.value === null || t.value === undefined)){ m.className = "sf-msg err"; m.textContent = "Vul bij elke ruilkaart naam, set (bij \"in voorraad\") en ruilwaarde in."; return; }
+  b.disabled = true; m.className = "sf-msg"; m.textContent = "Bezig met afboeken…";
   cart.forEach(l => { delete l.err; });
   try {
     const calc = cartCalc();
@@ -2859,12 +3014,16 @@ $("cartCheckout").addEventListener("click", async () => {
       return l.type === "item"
       ? { type: "item", sheet: l.sheet, match: l.match, qty: l.qty, price: l.price === null ? l.price : u, disc: d }
       : Object.assign({ type: "card", qty: l.qty, price: l.price === null ? l.price : u, disc: d }, l.match); });
-    const j = await apiCall({ action: "sellbatch", lines });
-    const rest = [], total = { n: 0, eur: 0 }; let problems = 0;
+    const tradePay = trade.map(t => { const k = allCards.find(c => nkey(c.name, c.set, c.number) === nkey(t.name, t.set, t.number));
+      return { mode: t.mode === "own" ? "own" : "stock", set: t.set, number: t.number, name: t.name, qty: t.qty, value: t.value, cond: (k && k.condition) || "Near Mint", vkp: k && k.vkp !== null && k.vkp !== undefined ? k.vkp : undefined }; });
+    const payUsed = effPay();
+    const j = await apiCall({ action: "sellbatch", lines, pay: payUsed, trade: tradePay });
+    const rest = [], total = { n: 0, eur: 0 }, soldLines = []; let problems = 0;
     cart.forEach((l, i) => {
       const r = (j.results || [])[i];
       if (!r || !r.ok){ l.err = (r && r.error) || "Niet verwerkt"; rest.push(l); problems++; return; }
       total.n += r.sold; total.eur += r.sold * (calc.per[i].unit || 0);
+      soldLines.push({ type: l.type, sheet: l.sheet, match: l.match, fields: l.fields, label: l.label, sold: r.sold });
       if (l.type === "card"){
         afterWrite({ set: l.match.matchSet, number: l.match.matchNumber, name: l.match.matchName }, { qty: r.qty, vkp: r.vkp }, l.fields);
       } else {
@@ -2874,7 +3033,18 @@ $("cartCheckout").addEventListener("click", async () => {
       if (r.short){ l.qty = l.qty - r.sold; l.err = "Maar " + r.sold + " beschikbaar, de rest is niet afgeboekt."; rest.push(l); problems++; }
     });
     try { localStorage.setItem(COLL_CACHE_KEY, JSON.stringify(collections)); } catch(e){}
-    rest.forEach(l => { l.disc = 0; l.sel = false; }); cart = rest; saveCart(); if (!rest.length){ $("cashIn").value = ""; grpDisc = 0; $("grpAmt").value = ""; } renderCart(); renderApp();
+    rest.forEach(l => { l.disc = 0; l.sel = false; });
+    if (soldLines.length){
+      const tr = j.tradeResults || [];
+      trade.forEach((t, i) => { if (t.mode === "own") return; const r = tr[i];
+        const k = allCards.find(c => nkey(c.name, c.set, c.number) === nkey(t.name, t.set, t.number));
+        const qty = r && r.ok ? r.qty : ((k && k.qty !== null && k.qty !== undefined ? k.qty : 0) + t.qty);
+        const vkp = r && r.ok && r.vkp !== undefined && r.vkp !== "" ? r.vkp : (k ? k.vkp : null);
+        afterWrite({ set: t.set, number: t.number, name: t.name }, { qty, vkp }, { set: t.set, number: t.number, name: t.name, cond: (k && k.condition) || "Near Mint" }); });
+      lastSale = { bon: j.bon || "", at: Date.now(), n: total.n, eur: Math.round(total.eur * 100) / 100, pay: payUsed, lines: soldLines, trade: trade.map(t => ({ mode: t.mode, set: t.set, number: t.number, name: t.name, qty: t.qty, value: t.value, cond: "Near Mint" })), due: dueAmount() };
+      saveLastSale(); trade = []; saveTrade(); renderTrade();
+    }
+    cart = rest; saveCart(); if (!rest.length){ $("cashIn").value = ""; grpDisc = 0; $("grpAmt").value = ""; } renderCart(); renderApp();
     m.className = "sf-msg " + (problems ? "err" : "ok");
     m.textContent = okTxt(j, "Afgeboekt: " + total.n + " stuk(s), " + fmtPrice(total.eur) + (problems ? " – " + problems + " regel(s) niet volledig verwerkt." : " ✓"));
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
@@ -2892,14 +3062,51 @@ $("dayBtn").addEventListener("click", async () => {
     const tile = (v, l) => `<div class="day-tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
     const lines = (j.lines || []).slice().reverse().map(x =>
       `<div><span>${escapeHTML(x.time)} · ${x.type === "verkocht" ? "🟢" : "🔵"} ${x.qty}× ${escapeHTML(x.name || "")}</span><b>${fmtPrice(x.qty * x.price)}</b></div>`).join("");
-    out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}${j.discount ? tile(fmtPrice(j.discount), "korting gegeven") : ""}</div>` +
-      (lines ? `<div class="day-list">${lines}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen of aankopen op deze dag.</div>`) +
-      daySections(j) +
-      `<div class="export-row"><button class="btn btn-yellow" type="button" data-exp="share">📤 Deel dagafsluiting</button><button class="btn btn-ghost" type="button" data-exp="csv">⬇ Download CSV</button><button class="btn btn-ghost" type="button" data-exp="copy">📋 Kopieer als tekst</button></div>`;
+    out.innerHTML = renderDayClose(j);
     lastDay = j;
   } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
 });
 
+/* ---- v61: dagafsluiting met bonnen, betaalwijze, winst en kas ---- */
+function kasState(date){ try { return JSON.parse(localStorage.getItem(KAS_PREFIX + date) || "{}") || {}; } catch(e){ return {}; } }
+function kasCalc(j){
+  const st = kasState(j.date), cash = (j.pay && j.pay.Cash) || 0;
+  const start = parseMoney(String(st.start || "")) || 0, hasCount = String(st.count || "").trim() !== "", count = parseMoney(String(st.count || "")) || 0;
+  const minusBuy = st.minusBuy !== false, buy = minusBuy ? (j.cost || 0) : 0;
+  const expected = Math.round((start + cash - buy) * 100) / 100;
+  return { st, cash, start, hasCount, count, buy, expected, diff: Math.round((count - expected) * 100) / 100 };
+}
+function kasResHTML(j){
+  const k = kasCalc(j);
+  let h = `<div><span>Startkas</span><span>${fmtPrice(k.start)}</span></div><div><span>+ Cash ontvangen (na ruil)</span><span>${fmtPrice(k.cash)}</span></div>` + (k.buy ? `<div><span>– Inkoop uit kas</span><span>${fmtPrice(k.buy)}</span></div>` : "") + `<div><span><b>Verwacht in kas</b></span><b>${fmtPrice(k.expected)}</b></div>`;
+  if (k.hasCount) h += `<div class="diff ${Math.abs(k.diff) < 0.005 ? "ok" : "bad"}"><span>${k.diff >= 0.005 ? "Overschot" : k.diff <= -0.005 ? "Tekort" : "Verschil"}</span><b>${Math.abs(k.diff) < 0.005 ? "klopt ✓" : fmtPrice(Math.abs(k.diff))}</b></div>`;
+  return h;
+}
+function renderDayClose(j){
+  const tile = (v, l) => `<div class="day-tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  const lines = (j.lines || []).slice().reverse().map(x =>
+    `<div><span>${escapeHTML(x.time)} · ${x.type === "verkocht" ? "🟢" : x.type === "ruil" ? "🔄" : x.type === "eigen" ? "⭐" : "🔵"} ${x.qty}× ${escapeHTML(x.name || "")}${x.bon ? ` <small style="color:var(--grey)">${bonShort(x.bon)}${x.pay ? " " + escapeHTML(x.pay) : ""}</small>` : ""}</span><b>${fmtPrice(x.qty * x.price)}</b></div>`).join("");
+  const bons = j.bons || 0;
+  const tiles = tile(j.sold, "kaarten verkocht") + tile(fmtPrice(j.revenue), "omzet") + (bons ? tile(bons, "bonnen / klanten") + tile(fmtPrice(j.revenue / bons), "gemiddeld per bon") : "") +
+    tile(j.bought, "kaarten ingekocht") + tile(fmtPrice(j.cost), "inkoop uitgegeven") + tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop") +
+    (j.soldCost !== undefined && j.sold ? tile(fmtPrice(j.profit || 0), "winst op verkochte kaarten") : "") + (j.discount ? tile(fmtPrice(j.discount), "korting gegeven") : "") +
+    (j.trade && j.trade.stockQty ? tile(fmtPrice(j.trade.stockValue), "ruil: " + j.trade.stockQty + " kaart(en) in voorraad") : "") + (j.trade && j.trade.ownQty ? tile(fmtPrice(j.trade.ownValue), "ruil: " + j.trade.ownQty + " kaart(en) eigen collectie") : "");
+  const payKeys = Object.keys(j.pay || {});
+  const payHtml = payKeys.length ? `<div class="day-h">Per betaalwijze <small style="font-weight:400;color:var(--grey)">(ruil apart)</small></div><div class="day-list">${payKeys.map(k => `<div><span>${escapeHTML(k)}</span><b>${fmtPrice(j.pay[k])}</b></div>`).join("")}</div>` : "";
+  const note = j.unknownQty ? `<div style="color:var(--grey);font-size:12px;margin-top:6px;">Winst: ${j.unknownQty} verkochte stuk(s) hebben geen aankoopprijs in de Log en tellen niet mee. De aankoopprijs is het gemiddelde van alle gelogde aankopen van die kaart.</div>` : "";
+  const st = kasState(j.date);
+  const kas = `<div class="day-h">Kas tellen</div><div class="kasbox"><div class="field-row"><div><label style="font-size:12px;color:var(--grey);font-weight:700;">Startkas (€)</label><input type="text" inputmode="decimal" id="dayKasStart" value="${escapeHTML(String(st.start || ""))}" placeholder="0,00"></div><div><label style="font-size:12px;color:var(--grey);font-weight:700;">Geteld op het einde (€)</label><input type="text" inputmode="decimal" id="dayKasCount" value="${escapeHTML(String(st.count || ""))}" placeholder="0,00"></div></div><label class="chk"><input type="checkbox" id="dayKasBuy"${st.minusBuy === false ? "" : " checked"}> Inkoop is uit de kas betaald</label><div class="kasres" id="dayKasRes">${kasResHTML(j)}</div><div style="color:var(--grey);font-size:11px;margin-top:4px;">Wordt bewaard op dit toestel.</div></div>`;
+  return `<div class="day-tiles">${tiles}</div>${note}` + payHtml +
+    (lines ? `<div class="day-list" style="margin-top:10px;">${lines}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen of aankopen op deze dag.</div>`) +
+    daySections(j) + kas +
+    `<div class="export-row"><button class="btn btn-yellow" type="button" data-exp="share">📤 Deel dagafsluiting</button><button class="btn btn-ghost" type="button" data-exp="csv">⬇ Download CSV</button><button class="btn btn-ghost" type="button" data-exp="copy">📋 Kopieer als tekst</button></div>`;
+}
+$("dayOut").addEventListener("input", (e) => {
+  if (!lastDay || !/^dayKas/.test(e.target.id || "")) return;
+  const st = { start: $("dayKasStart").value, count: $("dayKasCount").value, minusBuy: $("dayKasBuy").checked };
+  try { localStorage.setItem(KAS_PREFIX + lastDay.date, JSON.stringify(st)); } catch(x){}
+  $("dayKasRes").innerHTML = kasResHTML(lastDay);
+});
 /* ---- v59: dagafsluiting ---- */
 function dayAgg(j){
   const top = {}, sets = {};
@@ -2919,7 +3126,7 @@ function daySections(j){
 }
 function dayCloseText(j){
   const d = j.date.split("-").reverse().join("/"), a = dayAgg(j);
-  let t = "Pocketdrop dagafsluiting " + d + "\n\nOmzet: " + fmtPrice(j.revenue) + " (" + j.sold + " kaarten)\nInkoop: " + fmtPrice(j.cost) + " (" + j.bought + " kaarten)\nOmzet min inkoop: " + fmtPrice(j.revenue - j.cost) + "\n" + (j.discount ? "Korting gegeven: " + fmtPrice(j.discount) + "\n" : "");
+  let t = "Pocketdrop dagafsluiting " + d + "\n\nOmzet: " + fmtPrice(j.revenue) + " (" + j.sold + " kaarten" + (j.bons ? ", " + j.bons + " bonnen, gemiddeld " + fmtPrice(j.revenue / j.bons) + " per bon" : "") + ")\nInkoop: " + fmtPrice(j.cost) + " (" + j.bought + " kaarten)\nOmzet min inkoop: " + fmtPrice(j.revenue - j.cost) + "\n" + (j.sold ? "Winst op verkochte kaarten: " + fmtPrice(j.profit || 0) + (j.unknownQty ? " (" + j.unknownQty + " stuk(s) zonder aankoopprijs niet meegerekend)" : "") + "\n" : "") + (j.discount ? "Korting gegeven: " + fmtPrice(j.discount) + "\n" : "") + (j.trade && (j.trade.stockQty || j.trade.ownQty) ? "Ruil ontvangen: " + fmtPrice(j.trade.stockValue + j.trade.ownValue) + " (" + j.trade.stockQty + " in voorraad, " + j.trade.ownQty + " eigen collectie)\n" : "") + (j.pay && Object.keys(j.pay).length ? "\nPer betaalwijze:\n" + Object.keys(j.pay).map(k => k + ": " + fmtPrice(j.pay[k])).join("\n") + "\n" : "") + (kasCalc(j).hasCount ? (() => { const k = kasCalc(j); return "\nKas: verwacht " + fmtPrice(k.expected) + ", geteld " + fmtPrice(k.count) + (Math.abs(k.diff) < 0.005 ? " (klopt)" : (k.diff > 0 ? " (overschot " : " (tekort ") + fmtPrice(Math.abs(k.diff)) + ")") + "\n"; })() : "");
   if (a.top.length){ t += "\nTopverkopers:"; a.top.forEach((x, i) => { t += "\n" + (i + 1) + ". " + x.qty + "× " + x.name + " (" + x.set + ") " + fmtPrice(x.eur); }); }
   if (a.sets.length){ t += "\n\nPer set:"; a.sets.forEach(x => { t += "\n" + x.set + ": " + x.qty + "× " + fmtPrice(x.eur); }); }
   return t;
@@ -2940,16 +3147,16 @@ async function copyText(t){
 }
 let lastDay = null;
 function dayExportRows(j){
-  const rows = [["Datum", "Tijd", "Type", "Set", "Kaart", "Aantal", "Prijs per stuk", "Totaal"]];
-  (j.lines || []).forEach(x => rows.push([j.date, x.time, x.type, x.set, x.name, x.qty, csvNum(x.price), csvNum(x.qty * x.price)]));
+  const rows = [["Datum", "Tijd", "Type", "Set", "Kaart", "Aantal", "Prijs per stuk", "Totaal", "Bon", "Betaalwijze", "Gem. aankoopprijs"]];
+  (j.lines || []).forEach(x => rows.push([j.date, x.time, x.type, x.set, x.name, x.qty, csvNum(x.price), csvNum(x.qty * x.price), x.bon || "", x.pay || "", x.cost === null || x.cost === undefined ? "" : csvNum(x.cost)]));
   rows.push([]); rows.push(["Kaarten verkocht", j.sold]); rows.push(["Omzet", csvNum(j.revenue)]);
-  rows.push(["Kaarten ingekocht", j.bought]); rows.push(["Inkoop", csvNum(j.cost)]); rows.push(["Omzet min inkoop", csvNum(j.revenue - j.cost)]);
+  rows.push(["Kaarten ingekocht", j.bought]); rows.push(["Inkoop", csvNum(j.cost)]); rows.push(["Omzet min inkoop", csvNum(j.revenue - j.cost)]); rows.push(["Winst op verkochte kaarten", csvNum(j.profit || 0)]); rows.push(["Bonnen", j.bons || 0]); Object.keys(j.pay || {}).forEach(k => rows.push(["Omzet " + k, csvNum(j.pay[k])]));
   return rows;
 }
 function dayExportText(j){
   const d = j.date.split("-").reverse().join("/");
   let t = "Pocketdrop dagoverzicht " + d + "\n" + j.sold + " kaarten verkocht · omzet " + fmtPrice(j.revenue) + "\n" + j.bought + " kaarten ingekocht · inkoop " + fmtPrice(j.cost) + "\nOmzet min inkoop: " + fmtPrice(j.revenue - j.cost) + "\n";
-  (j.lines || []).forEach(x => { t += "\n" + x.time + " " + (x.type === "verkocht" ? "verkocht" : "ingekocht") + " " + x.qty + "× " + (x.name || "") + " (" + (x.set || "") + ") " + fmtPrice(x.qty * x.price); });
+  (j.lines || []).forEach(x => { t += "\n" + x.time + " " + (x.type === "verkocht" ? "verkocht" : x.type === "ruil" ? "ruil in voorraad" : x.type === "eigen" ? "ruil eigen collectie" : "ingekocht") + " " + x.qty + "× " + (x.name || "") + " (" + (x.set || "") + ") " + fmtPrice(x.qty * x.price); });
   return t;
 }
 $("dayOut").addEventListener("click", async (e) => {
@@ -3328,9 +3535,10 @@ function cleanOldStorage(){
     if (now - (parseInt(localStorage.getItem(CLEAN_KEY) || "0", 10) || 0) < 7 * 86400000) return;
     const known = new Set([API_SECRET_KEY, PENDING_KEY, STAFF_KEY, DATA_CACHE_KEY, IMG_CACHE_KEY, MANUAL_CARDS_KEY, PIN_KEY, SET_LOGO_CACHE_KEY,
       SET_LOGO_OVERRIDE_KEY, IMAGE_OVERRIDE_KEY, CARD_OVERRIDE_KEY, QUEUE_KEY, QUEUE_FAILED_KEY, COLL_CACHE_KEY, CART_KEY, FAIR_CACHE_KEY,
-      SCAN_READY_KEY, ADMIN_TAB_KEY, CLEAN_KEY]);
+      SCAN_READY_KEY, ADMIN_TAB_KEY, CLEAN_KEY, PAY_KEY, LASTSALE_KEY, TRADE_KEY]);
     let removed = 0;
     Object.keys(localStorage).forEach(k => {
+      if (k.indexOf(KAS_PREFIX) === 0){ const d = Date.parse(k.slice(KAS_PREFIX.length)); if (d && now - d > 45 * 86400000){ try { localStorage.removeItem(k); removed++; } catch(e){} } return; }
       if (k.indexOf("pocketdrop_") === 0 && !known.has(k)){ try { localStorage.removeItem(k); removed++; } catch(e){} }
     });
     // verlopen tijdelijke wijzigingen en oude meldingen van de offline-wachtrij
