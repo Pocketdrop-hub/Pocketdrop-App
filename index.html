@@ -829,7 +829,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v72</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v73</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1095,6 +1095,15 @@
         <div class="manual-list" id="setLogoList" style="margin-top:12px;"></div>
 
         
+        <hr class="admin-divider">
+        <div class="admin-section-title">Foto's vooraf laden (voor de beurs)</div>
+        <div class="admin-note" style="margin-top:0;">Doe dit thuis of op goede wifi. De tablet bewaart dan alle kaartfoto's en set-logo's, zodat ze op de beurs ook zonder of met trage internetverbinding meteen verschijnen.</div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:10px 0;"><input type="checkbox" id="pfBig" checked> Ook de grote foto's (voor het kaartdetail)</label>
+        <div class="btn-row"><button type="button" class="btn btn-primary" id="pfStart">Foto's nu downloaden</button><button type="button" class="btn btn-ghost" id="pfStop" style="display:none;">Stoppen</button></div>
+        <div id="pfBarWrap" style="display:none;height:12px;border-radius:6px;background:var(--cream-alt);overflow:hidden;margin-top:10px;"><div id="pfBar" style="height:100%;width:0;background:var(--gold,#FFCB05);transition:width .2s;"></div></div>
+        <div class="sf-msg" id="pfMsg"></div>
+        <div class="admin-note" id="pfLast"></div>
+
         <hr class="admin-divider">
         <div class="admin-section-title">QR-labels printen</div>
         <div class="field"><label>Set</label><select id="qrSetSelect"></select></div>
@@ -3606,6 +3615,70 @@ $("wSend").addEventListener("click", async () => {
   wishBusy = false; $("wSend").disabled = false;
 });
 
+/* ---- v73: foto's vooraf laden (staff): alle kaartfoto's + set-logo's in de cache van de tablet ---- */
+const PRELOAD_KEY = "pocketdrop_preload_v1";
+let pfRun = false, pfCancel = false;
+function pfMsg(t, ok){ const m = $("pfMsg"); m.textContent = t; m.className = "sf-msg" + (ok === true ? " ok" : (ok === false ? " err" : "")); }
+function pfBar(f){ $("pfBarWrap").style.display = ""; $("pfBar").style.width = Math.round(iaClamp(f) * 100) + "%"; }
+function pfLoadImg(url){
+  return new Promise(res => {
+    const im = new Image(); let done = false;
+    const fin = (ok) => { if (done) return; done = true; clearTimeout(tm); im.onload = im.onerror = null; im.src = ""; res(ok); };
+    const tm = setTimeout(() => fin(false), 20000);
+    im.onload = () => fin(true); im.onerror = () => fin(false);
+    im.decoding = "async"; im.src = url;
+  });
+}
+async function pfPool(items, n, fn){
+  let i = 0;
+  await Promise.all(Array.from({ length: n }, async () => { while (i < items.length && !pfCancel){ const k = i++; await fn(items[k], k); } }));
+}
+async function pfShowLast(){
+  let t = "";
+  try { const o = JSON.parse(localStorage.getItem(PRELOAD_KEY) || "null"); if (o) t = "Laatst uitgevoerd: " + new Date(o.at).toLocaleString("nl-BE", { dateStyle: "short", timeStyle: "short" }) + " · " + o.ok + " foto's opgeslagen" + (o.fail ? " (" + o.fail + " niet gelukt)" : ""); } catch(e){}
+  try { if (navigator.storage && navigator.storage.estimate){ const e = await navigator.storage.estimate(); if (e && e.usage) t += (t ? " · " : "") + "opslag in gebruik: " + Math.round(e.usage / 1048576) + " MB"; } } catch(e){}
+  $("pfLast").textContent = t;
+}
+async function preloadPhotos(){
+  if (pfRun) return;
+  if (!navigator.onLine){ pfMsg("Geen internet. Probeer dit op wifi.", false); return; }
+  pfRun = true; pfCancel = false; $("pfStart").disabled = true; $("pfStop").style.display = "";
+  const big = $("pfBig").checked;
+  try {
+    const cards = shopCards();
+    // 1) adressen van de foto's opzoeken (wordt ook onthouden voor offline gebruik)
+    const bases = new Array(cards.length);
+    let n1 = 0;
+    pfMsg("Foto's opzoeken… 0/" + cards.length); pfBar(0);
+    await pfPool(cards, 4, async (c, k) => { bases[k] = await resolveImage(c.name, c.set, c.number).catch(() => null); n1++; if (n1 % 5 === 0 || n1 === cards.length){ pfMsg("Foto's opzoeken… " + n1 + "/" + cards.length); pfBar(n1 / cards.length * .3); } });
+    if (pfCancel) throw new Error("stop");
+    // 2) set-logo's
+    const logos = [];
+    const sets = Array.from(new Set(cards.map(c => setOf(c))));
+    await pfPool(sets, 3, async (sn) => { try { const m = await resolveSetMeta(sn); const u = m.logoFull || (m.logo ? m.logo + ".png" : null); if (u) logos.push(u); } catch(e){} });
+    // slabs/sealed
+    const extra = [];
+    Object.keys(COLL_DEFS).forEach(name => collVisible(name, false).forEach(it => { if (it.foto) extra.push(it.foto); }));
+    // 3) lijst van te downloaden foto's
+    const jobs = new Set(); logos.forEach(u => jobs.add(u)); extra.forEach(u => jobs.add(u));
+    cards.forEach((c, k) => { const b = bases[k]; if (!b) return; jobs.add(imgSrc(b, "low")); if (big) jobs.add(imgSrc(b, "high")); });
+    const list = Array.from(jobs).filter(u => !/^data:/i.test(u));
+    let ok = 0, fail = 0, n2 = 0;
+    await pfPool(list, 6, async (u) => { const r = await pfLoadImg(u); if (r) ok++; else fail++; n2++; if (n2 % 5 === 0 || n2 === list.length){ pfMsg("Foto's downloaden… " + n2 + "/" + list.length); pfBar(.3 + n2 / list.length * .7); } });
+    if (pfCancel) throw new Error("stop");
+    const noPic = bases.filter(b => !b).length;
+    try { localStorage.setItem(PRELOAD_KEY, JSON.stringify({ at: Date.now(), ok, fail })); } catch(e){}
+    pfBar(1); pfMsg("Klaar ✓ " + ok + " foto's opgeslagen" + (fail ? ", " + fail + " niet gelukt" : "") + (noPic ? ", " + noPic + " kaart(en) zonder foto gevonden" : "") + ". Je kunt dit gerust opnieuw starten: wat al opgeslagen is, gaat snel.", true);
+  } catch(e){
+    if (String(e && e.message) === "stop") pfMsg("Gestopt. Wat al gedownload is, blijft bewaard.", null); else pfMsg("Mislukt: " + (e && e.message ? e.message : e), false);
+  }
+  pfRun = false; $("pfStart").disabled = false; $("pfStop").style.display = "none";
+  pfShowLast();
+}
+$("pfStart").addEventListener("click", preloadPhotos);
+$("pfStop").addEventListener("click", () => { pfCancel = true; });
+try { pfShowLast(); } catch(e){}
+
 /* ---- v69: taalwissel NL/EN (alleen klantdeel) ---- */
 const NL_HERO_P = $("heroP") ? $("heroP").innerHTML : "";
 function applyStatic(){
@@ -4042,7 +4115,7 @@ function cleanOldStorage(){
     if (now - (parseInt(localStorage.getItem(CLEAN_KEY) || "0", 10) || 0) < 7 * 86400000) return;
     const known = new Set([API_SECRET_KEY, PENDING_KEY, STAFF_KEY, DATA_CACHE_KEY, IMG_CACHE_KEY, MANUAL_CARDS_KEY, PIN_KEY, SET_LOGO_CACHE_KEY,
       SET_LOGO_OVERRIDE_KEY, IMAGE_OVERRIDE_KEY, CARD_OVERRIDE_KEY, QUEUE_KEY, QUEUE_FAILED_KEY, COLL_CACHE_KEY, CART_KEY, FAIR_CACHE_KEY,
-      SCAN_READY_KEY, ADMIN_TAB_KEY, CLEAN_KEY, PAY_KEY, LASTSALE_KEY, TRADE_KEY]);
+      SCAN_READY_KEY, ADMIN_TAB_KEY, CLEAN_KEY, PAY_KEY, LASTSALE_KEY, TRADE_KEY, PRELOAD_KEY]);
     let removed = 0;
     Object.keys(localStorage).forEach(k => {
       if (k.indexOf(KAS_PREFIX) === 0){ const d = Date.parse(k.slice(KAS_PREFIX.length)); if (d && now - d > 45 * 86400000){ try { localStorage.removeItem(k); removed++; } catch(e){} } return; }

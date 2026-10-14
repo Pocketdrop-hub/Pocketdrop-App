@@ -1,7 +1,7 @@
-const CACHE_NAME = "pocketdrop-shell-v72";
+const CACHE_NAME = "pocketdrop-shell-v73";
 const IMG_CACHE = "pocketdrop-img-v1";
 const LIB_CACHE = "pocketdrop-lib-v1";
-const IMG_MAX = 600;
+const IMG_MAX = 4000;
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.png", "./hero.png", "./logo-halloween.png"];
 const KEEP = [CACHE_NAME, IMG_CACHE, LIB_CACHE];
 
@@ -42,7 +42,7 @@ function cacheFirst(req, cacheName, max) {
       return fetch(req).then((res) => {
         // ok responses and opaque (no-cors) responses are both usable for <img>
         if (res && (res.ok || res.type === "opaque")) {
-          cache.put(req, res.clone()).then(() => { if (max) trimCache(cacheName, max); }).catch(() => {});
+          cache.put(req, res.clone()).then(() => { if (max && Math.random() < 0.04) trimCache(cacheName, max); }).catch(() => {});
         }
         return res;
       });
