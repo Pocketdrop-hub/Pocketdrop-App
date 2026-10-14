@@ -851,7 +851,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v78</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v80</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1229,8 +1229,8 @@
     <button class="close-x" id="closeBuy">✕</button>
     <div class="admin-body" style="padding-top:22px;">
       <h3 style="margin:0 0 4px;">Inkoopcalculator</h3>
-      <p class="admin-note" style="margin:0 0 12px;">Kies je inkooppercentage, voeg de kaarten toe en toon het bod. Pas bevestigen als de verkoper akkoord is.</p>
-      <div class="admin-section-title" style="margin-bottom:6px;">Inkooppercentage (van je Lowest)</div>
+      <p class="admin-note" style="margin:0 0 12px;">Het bod rekent met de kolom "Lowest EU" uit je sheet. Kies je inkooppercentage, voeg de kaarten toe en toon het bod. Pas bevestigen als de verkoper akkoord is.</p>
+      <div class="admin-section-title" style="margin-bottom:6px;">Inkooppercentage (van Lowest EU)</div>
       <div class="buy-pct" id="buyPct"><button type="button" data-p="70">70%</button><button type="button" data-p="75" class="on">75%</button><button type="button" data-p="80">80%</button><button type="button" data-p="85">85%</button></div>
       <div class="field" style="margin-top:14px;"><label>Kaart zoeken (naam, set of nummer)</label><input id="buySearch" type="text" placeholder="bv. charizard 4" autocomplete="off"></div>
       <div id="buyRes" class="buy-res"></div>
@@ -1496,7 +1496,7 @@ function rowsToCards(rows){
   const header = rows[0].map(h => h.trim().toLowerCase());
   const idx = (name) => header.findIndex(h => h === name);
   const iSet = idx("set"), iNum = idx("number"), iCard = idx("card"),
-        iAantal = idx("aantal"), iCm = idx("cm link"), iLowest = idx("lowest"), iCond = idx("conditie"),
+        iAantal = idx("aantal"), iCm = idx("cm link"), iLowest = idx("lowest"), iLowestEu = idx("lowest eu"), iCond = idx("conditie"),
         iVkp = idx("verkoopprijs") !== -1 ? idx("verkoopprijs") : idx("vkp");
 
   const cards = [];
@@ -1512,6 +1512,7 @@ function rowsToCards(rows){
       cmLink: (row[iCm] || "").trim(),
       condition: iCond >= 0 ? (row[iCond] || "").trim() : "",
       lowest: toNumber(row[iLowest]),
+      lowestEu: iLowestEu >= 0 ? toNumber(row[iLowestEu]) : null,
       vkp: toNumber(row[iVkp]),
       imgKey: null,
       manual: false
@@ -3865,14 +3866,20 @@ function iaStop(){ cancelAnimationFrame(IA.raf); IA.raf = 0; }
 /* ---- v78: inkoopcalculator ---- */
 let buyPct = 75, buyLines = [], buyArm = 0, buyBusy = false;
 const buyR2 = x => Math.round(x * 100) / 100;
+/* referentie: enkel Lowest EU (geen terugval op Lowest) */
+function buyRef(c){
+  if (typeof c.lowestEu === "number" && c.lowestEu > 0) return { v: c.lowestEu, src: "eu" };
+  return { v: null, src: "" };
+}
+const BUY_SRC = { eu: "Lowest EU", manual: "zelf ingevuld", "": "" };
 const buyBid = l => (typeof l.lowest === "number" && l.lowest > 0) ? buyR2(l.lowest * buyPct / 100) : null;
 function buyRender(){
   const box = $("buyLines");
   box.innerHTML = buyLines.length ? buyLines.map((l, i) => {
     const b = buyBid(l);
     return `<div class="buy-line${b === null ? " miss" : ""}" data-i="${i}"><div class="nm">${escapeHTML(l.name)}<small>${escapeHTML(l.set)}${l.number ? " · " + escapeHTML(l.number) : ""}${l.known ? "" : " · nieuw in sheet"}</small></div><button type="button" class="rm" data-rm="${i}">✕</button>
-      <div class="row2"><div><label>Aantal</label><input class="qw" type="number" min="1" step="1" value="${l.qty}"></div><div><label>Lowest (€)</label><input class="lw" type="text" inputmode="decimal" value="${l.lowest === null ? "" : String(l.lowest).replace(".", ",")}" placeholder="invullen"></div>
-      <div class="bid">${b === null ? "—" : fmtPrice(b)}<small>${b === null ? "geen Lowest" : "per kaart · totaal " + fmtPrice(buyR2(b * l.qty))}</small></div></div></div>`;
+      <div class="row2"><div><label>Aantal</label><input class="qw" type="number" min="1" step="1" value="${l.qty}"></div><div><label>Lowest EU (€)</label><input class="lw" type="text" inputmode="decimal" value="${l.lowest === null ? "" : String(l.lowest).replace(".", ",")}" placeholder="invullen"></div>
+      <div class="bid">${b === null ? "—" : fmtPrice(b)}<small>${b === null ? "geen Lowest EU" : "per kaart · totaal " + fmtPrice(buyR2(b * l.qty))}</small></div></div>${l.src && l.src !== "eu" ? `<div class="srcnote" style="grid-column:1/3;font-size:12px;color:var(--grey);">Referentie: ${BUY_SRC[l.src]}</div>` : ""}</div>`;
   }).join("") : '<div style="color:var(--grey);font-size:13px;">Nog geen kaarten toegevoegd.</div>';
   buyTotals();
 }
@@ -3881,7 +3888,7 @@ function buyTotals(){
   buyLines.forEach(l => { n += l.qty; const b = buyBid(l); if (b === null){ miss++; return; } mkt += l.lowest * l.qty; bid += b * l.qty; });
   $("buyTot").innerHTML = `<div>Marktwaarde<b>${fmtPrice(buyR2(mkt))}</b></div><div class="hl">Mijn bod (${buyPct}%)<b>${fmtPrice(buyR2(bid))}</b></div>` + (buyLines.length ? `<div>Kaarten<b>${n}</b></div>` : "");
   const m = $("buyMsg");
-  if (miss){ m.className = "sf-msg err"; m.textContent = miss + " kaart(en) zonder Lowest: vul de Lowest in om het bod te kunnen berekenen."; }
+  if (miss){ m.className = "sf-msg err"; m.textContent = miss + " kaart(en) zonder Lowest EU: vul de Lowest EU in de sheet in, of hier ter plekke, om het bod te kunnen berekenen."; }
   else if (!buyBusy && m.className.indexOf("ok") < 0){ m.className = "sf-msg"; m.textContent = ""; }
   $("buyConfirm").textContent = "Inkoop bevestigen"; buyArm = 0;
 }
@@ -3889,7 +3896,7 @@ function buyAdd(c, known){
   const k = nkey(c.name, c.set, c.number);
   const ex = buyLines.find(l => l.k === k);
   if (ex) ex.qty++;
-  else buyLines.push({ k, set: c.set, number: c.number, name: c.name, qty: 1, lowest: (typeof c.lowest === "number") ? c.lowest : null, known, card: known ? c : null });
+  else { const r = buyRef(c); buyLines.push({ k, set: c.set, number: c.number, name: c.name, qty: 1, lowest: r.v, src: r.src, known, card: known ? c : null }); }
   $("buyMsg").className = "sf-msg"; $("buyMsg").textContent = "";
   buyRender();
 }
@@ -3899,7 +3906,7 @@ function buySearch(){
   const words = q.split(/\s+/);
   const hits = allCards.filter(c => { const h = (c.name + " " + c.set + " " + (c.number || "")).toLowerCase(); return words.every(w => h.indexOf(w) >= 0); }).slice(0, 8);
   box._items = hits;
-  box.innerHTML = hits.length ? hits.map((c, i) => `<div data-i="${i}"><span>${escapeHTML(c.name)} <small>${escapeHTML(c.set)}${c.number ? " · " + escapeHTML(c.number) : ""}</small></span><b>${c.lowest !== null && c.lowest !== undefined ? fmtPrice(c.lowest) : "geen Lowest"}</b></div>`).join("") : '<div style="color:var(--grey);cursor:default">Niet in je sheet gevonden. Probeer de catalogus hieronder.</div>';
+  box.innerHTML = hits.length ? hits.map((c, i) => `<div data-i="${i}"><span>${escapeHTML(c.name)} <small>${escapeHTML(c.set)}${c.number ? " · " + escapeHTML(c.number) : ""}</small></span><b>${(() => { const r = buyRef(c); return r.v === null ? "geen Lowest EU" : fmtPrice(r.v); })()}</b></div>`).join("") : '<div style="color:var(--grey);cursor:default">Niet in je sheet gevonden. Probeer de catalogus hieronder.</div>';
 }
 $("aqBuy").addEventListener("click", () => { $("adminBackdrop").classList.remove("show"); $("buyBackdrop").classList.add("show"); buyRender(); });
 function closeBuy(){ $("buyBackdrop").classList.remove("show"); }
@@ -3929,10 +3936,10 @@ $("buyCatRes").addEventListener("click", e => {
 $("buyLines").addEventListener("input", e => {
   const row = e.target.closest(".buy-line"); if (!row) return; const l = buyLines[+row.dataset.i]; if (!l) return;
   if (e.target.classList.contains("qw")) l.qty = Math.max(1, parseInt(e.target.value, 10) || 1);
-  else if (e.target.classList.contains("lw")){ const v = parseMoney(e.target.value); l.lowest = (v !== null && v > 0) ? v : null; }
+  else if (e.target.classList.contains("lw")){ const v = parseMoney(e.target.value); l.lowest = (v !== null && v > 0) ? v : null; l.src = l.lowest === null ? "" : "manual"; }
   // enkel de berekende delen van deze rij en de totalen bijwerken, zodat het invulveld zijn focus houdt
   const b = buyBid(l), bid = row.querySelector(".bid");
-  bid.innerHTML = (b === null ? "—" : fmtPrice(b)) + `<small>${b === null ? "geen Lowest" : "per kaart · totaal " + fmtPrice(buyR2(b * l.qty))}</small>`;
+  bid.innerHTML = (b === null ? "—" : fmtPrice(b)) + `<small>${b === null ? "geen Lowest EU" : "per kaart · totaal " + fmtPrice(buyR2(b * l.qty))}</small>`;
   row.classList.toggle("miss", b === null); buyTotals();
 });
 $("buyLines").addEventListener("click", e => { const r = e.target.closest("[data-rm]"); if (!r) return; buyLines.splice(+r.dataset.rm, 1); buyRender(); });
@@ -3940,7 +3947,7 @@ $("buyClear").addEventListener("click", () => { buyLines = []; $("buyMsg").class
 $("buyConfirm").addEventListener("click", async () => {
   if (buyBusy) return; const m = $("buyMsg");
   if (!buyLines.length){ m.className = "sf-msg err"; m.textContent = "Voeg eerst kaarten toe."; return; }
-  if (buyLines.some(l => buyBid(l) === null)){ m.className = "sf-msg err"; m.textContent = "Vul bij alle kaarten de Lowest in."; return; }
+  if (buyLines.some(l => buyBid(l) === null)){ m.className = "sf-msg err"; m.textContent = "Vul bij alle kaarten de Lowest EU in."; return; }
   const tot = buyR2(buyLines.reduce((t, l) => t + buyBid(l) * l.qty, 0)), cnt = buyLines.reduce((t, l) => t + l.qty, 0);
   if (!buyArm){ buyArm = 1; $("buyConfirm").textContent = `Tik nogmaals: ${cnt} kaarten voor ${fmtPrice(tot)} registreren`; setTimeout(() => { if (!buyBusy){ buyArm = 0; $("buyConfirm").textContent = "Inkoop bevestigen"; } }, 6000); return; }
   buyBusy = true; buyArm = 0; $("buyConfirm").disabled = true; m.className = "sf-msg"; m.textContent = "Bezig met registreren…";
