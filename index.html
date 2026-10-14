@@ -760,6 +760,21 @@
   #iaFinger{ position:absolute; left:0; top:0; width:150px; height:195px; filter:drop-shadow(0 12px 14px rgba(0,30,60,.4)); opacity:0; }
   #iaLogo{ position:absolute; left:0; top:0; height:200px; width:auto; filter:drop-shadow(0 6px 14px rgba(0,30,60,.45)); }
 
+/* v87 dealhulp, inzicht, beursrapport */
+.deal-box{background:var(--cream-alt,#f3efe6);border-radius:14px;padding:12px;margin:0 0 12px}
+.deal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.deal-grid div{background:#fff;border-radius:10px;padding:8px 10px;font-size:12px;color:var(--grey)}
+.deal-grid b{display:block;font-size:17px;color:#10181C}
+.deal-grid .min b{color:#b3261e}
+.deal-note{font-size:12px;color:var(--grey);margin-top:8px;line-height:1.4}
+.deal-note .neg{color:#b3261e;font-weight:700}
+.inv-age .row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.inv-age .lb{flex:0 0 150px}.inv-age .bar{flex:1;height:14px;background:rgba(0,0,0,.08);border-radius:7px;overflow:hidden}.inv-age .bar i{display:block;height:100%;background:linear-gradient(90deg,#3DB4F2,#0B6BAE)}
+.inv-age .v{flex:0 0 auto;text-align:right;min-width:90px}
+.fair-card{background:var(--cream-alt,#f3efe6);border-radius:14px;padding:12px;margin:10px 0}
+.fair-card h5{margin:0 0 2px;font-size:16px}.fair-card .sub{font-size:12px;color:var(--grey);margin-bottom:8px}
+.fair-card .fee{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
+.fair-card .net{font-weight:800}.fair-card .net.neg{color:#b3261e}.fair-card .net.pos{color:#1f8a4c}
 /* v83 accepteren-animatie */
 #offerFx{position:fixed;inset:0;z-index:100000;display:none;background:radial-gradient(circle at 50% 40%,#7BCFF3 0%,#2D9BE3 45%,#0B67A7 100%);overflow:hidden}
 #offerFx.on{display:block;animation:fxIn .4s ease-out}
@@ -891,7 +906,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v85</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v87</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -917,6 +932,11 @@
       <div class="staff-box" id="staffPanel" style="display:none;">
         <h4>Personeel · beheer deze kaart</h4>
         <div class="buyavg" id="buyAvg" style="display:none;"><span>Gem. aankoopprijs</span><b id="buyAvgVal">–</b></div>
+        <div class="deal-box" id="dealBox" style="display:none;">
+          <div class="deal-grid" id="dealGrid"></div>
+          <div class="deal-note" id="dealNote"></div>
+          <div class="field-row" style="margin-top:8px;align-items:flex-end;"><div class="field" style="flex:1;margin-bottom:0;"><label>Minimumprijs (€)</label><input id="sfMin" type="text" inputmode="decimal" placeholder="laagste prijs"></div><button class="btn btn-ghost" id="sfMinSave" type="button" style="flex:none;">Opslaan</button></div>
+        </div>
         <a id="sfCm" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer" style="display:none;text-decoration:none;text-align:center;box-sizing:border-box;width:100%;margin:0 0 10px;">🔗 Bekijk op Cardmarket ↗</a>
         <div id="staffManualNote" style="display:none;font-size:13px;color:var(--grey);">Dit is een lokaal toegevoegde kaart (niet in de sheet). Pas ze aan via Beheer.</div>
         <div id="staffEdit">
@@ -1055,6 +1075,18 @@
         <button class="btn btn-primary" id="stBtn" type="button" style="width:100%;">Statistieken tonen</button>
         <div class="sf-msg" id="stMsg"></div>
         <div id="stOut"></div>
+        <hr class="admin-divider">
+        <div class="admin-section-title">Voorraadinzicht: winst &amp; leeftijd</div>
+        <div class="admin-note" style="margin:0 0 8px;">Inkoopwaarde, verkoopwaarde en onrealiseerde winst van je voorraad, en hoe lang kaarten al liggen. Gebaseerd op de aankoopprijzen in de Log.</div>
+        <button class="btn btn-primary" id="invBtn" type="button" style="width:100%;">Voorraadinzicht tonen</button>
+        <div class="sf-msg" id="invMsg"></div>
+        <div id="invOut"></div>
+        <hr class="admin-divider">
+        <div class="admin-section-title">Beursrapport</div>
+        <div class="admin-note" style="margin:0 0 8px;">Per beurs: omzet, winst en wat je na het standgeld overhoudt. Vul het standgeld per beurs in.</div>
+        <button class="btn btn-primary" id="fairBtn" type="button" style="width:100%;">Beursrapport tonen</button>
+        <div class="sf-msg" id="fairMsg2"></div>
+        <div id="fairOut"></div>
         </div>
         <div class="atab" data-tab="kaarten">
         <div class="admin-section-title">Waarde van de catalogus</div>
@@ -1550,7 +1582,7 @@ function rowsToCards(rows){
   const header = rows[0].map(h => h.trim().toLowerCase());
   const idx = (name) => header.findIndex(h => h === name);
   const iSet = idx("set"), iNum = idx("number"), iCard = idx("card"),
-        iAantal = idx("aantal"), iCm = idx("cm link"), iLowest = idx("lowest"), iLowestEu = idx("lowest eu"), iCond = idx("conditie"),
+        iAantal = idx("aantal"), iCm = idx("cm link"), iLowest = idx("lowest"), iLowestEu = idx("lowest eu"), iMinP = idx("minimumprijs"), iCond = idx("conditie"),
         iVkp = idx("verkoopprijs") !== -1 ? idx("verkoopprijs") : idx("vkp");
 
   const cards = [];
@@ -1567,6 +1599,7 @@ function rowsToCards(rows){
       condition: iCond >= 0 ? (row[iCond] || "").trim() : "",
       lowest: toNumber(row[iLowest]),
       lowestEu: iLowestEu >= 0 ? toNumber(row[iLowestEu]) : null,
+      minPrice: iMinP >= 0 ? toNumber(row[iMinP]) : null,
       vkp: toNumber(row[iVkp]),
       imgKey: null,
       manual: false
@@ -2520,7 +2553,7 @@ function renderStaffPanel(){
     const direct = !!m, url = direct ? m[0] : "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + encodeURIComponent((c.name || "") + " " + (c.number || "")).replace(/%20/g, "+");
     a.style.display = c.manual ? "none" : "block"; a.href = url;
     a.textContent = direct ? "🔗 Bekijk op Cardmarket ↗" : "🔎 Zoek op Cardmarket ↗"; }
-  loadBuyAvg(c);
+  loadBuyAvg(c); renderDeal(c);
   $("staffManualNote").style.display = c.manual ? "" : "none";
   $("staffEdit").style.display = c.manual ? "none" : "";
   if (c.manual) return;
@@ -2540,7 +2573,7 @@ async function loadBuyAvg(c){
   if (!adminUnlocked || !c || c.manual){ box.style.display = "none"; return; }
   const o = c.orig || c, key = nkey(o.name, o.set, o.number);
   box.style.display = ""; 
-  const show = j => { val.textContent = j && j.n ? fmtPrice(j.avg) + " (" + j.qty + "× ingekocht)" : "nog geen aankoop gelogd"; };
+  const show = j => { val.textContent = j && j.n ? fmtPrice(j.avg) + " (" + j.qty + "× ingekocht)" : "nog geen aankoop gelogd"; try { renderDeal(c); } catch(e){} };
   if (buyAvgCache[key]) show(buyAvgCache[key]); else val.textContent = "…";
   try {
     const j = await apiCall({ action: "buyavg", matchSet: o.set, matchNumber: o.number, matchName: o.name });
@@ -3239,7 +3272,7 @@ function cartTotal(){ return cartCalc().net; }
 function renderCart(){
   const box = $("cartLines");
   if (!cart.length){ box.innerHTML = '<div style="padding:16px 0;color:var(--grey);">Het mandje is leeg.</div>'; }
-  else box.innerHTML = cart.map((l, i) => `
+  else { const kk = cartCalc(); box.innerHTML = cart.map((l, i) => `
     <div class="cart-line">
       <div><div class="cl-name">${escapeHTML(l.label)}</div><div class="cl-sub">${escapeHTML(l.sub || "")}${l.max !== null ? " · " + l.max + " op voorraad" : ""}</div></div>
       <div class="cl-ctl">
@@ -3252,14 +3285,25 @@ function renderCart(){
         <span>Korting op deze kaart €</span><input type="text" inputmode="decimal" data-a="disc" data-i="${i}" value="${l.disc ? String(l.disc).replace(".", ",") : ""}" placeholder="0,00">
       </div>
       ${l.err ? `<div class="cl-err">${escapeHTML(l.err)}</div>` : ""}
-    </div>`).join("");
+      ${l.min > 0 ? `<div class="cl-err cl-min" data-i="${i}" style="display:none"></div>` : ""}
+    </div>`).join(""); }
   const k = cartCalc(), nsel = cart.filter(l => l.sel).length;
   $("grpInfo").textContent = "· " + nsel + " aangevinkt";
   $("grpDisc").style.display = cart.length > 1 ? "" : "none";
   renderTotals();
   if ($("cashIn")) updateChange();
 }
+function updateMinWarn(){
+  const k = cartCalc();
+  document.querySelectorAll("#cartLines .cl-min").forEach(el => {
+    const l = cart[+el.dataset.i]; if (!l || !(l.min > 0) || !l.qty){ el.style.display = "none"; return; }
+    const u = k.per[+el.dataset.i].unit, low = u < l.min - 0.004;
+    el.style.display = low ? "" : "none";
+    if (low) el.textContent = "⚠ Onder je minimumprijs (" + fmtPrice(l.min) + " per kaart, nu " + fmtPrice(Math.round(u * 100) / 100) + ")";
+  });
+}
 function renderTotals(){
+  updateMinWarn();
   const k = cartCalc(), tt = tradeTotal(), due = Math.round((k.net - tt) * 100) / 100;
   $("cartSum").innerHTML = (k.disc > 0 || tt > 0) ? `<div><span>Subtotaal</span><span>${fmtPrice(k.gross)}</span></div>` + (k.disc > 0 ? `<div class="dsc"><span>Korting</span><span>– ${fmtPrice(k.disc)}</span></div>` : "") + (tt > 0 ? `<div class="dsc"><span>Ruilwaarde klant</span><span>– ${fmtPrice(tt)}</span></div>` : "") : "";
   $("cartTotLabel").textContent = due < 0 ? "Terug te geven" : "Te betalen";
@@ -3307,7 +3351,7 @@ $("cartClear").addEventListener("click", () => { cart = []; trade = []; saveTrad
 function cardLine(c){
   const o = c.orig || c;
   return { id: "c|" + nkey(o.name, o.set, o.number), type: "card", label: c.name, sub: c.set + " · " + (c.number || ""),
-    qty: 1, price: c.vkp === undefined ? null : c.vkp, max: c.qty === null || c.qty === undefined ? null : c.qty,
+    qty: 1, min: (typeof c.minPrice === "number" && c.minPrice > 0) ? c.minPrice : null, price: c.vkp === undefined ? null : c.vkp, max: c.qty === null || c.qty === undefined ? null : c.qty,
     match: { matchSet: o.set, matchNumber: o.number, matchName: o.name }, fields: { set: c.set, number: c.number, name: c.name, cond: c.condition || "Near Mint" } };
 }
 $("sfCart").addEventListener("click", () => { if (modalCard) cartAdd(cardLine(modalCard)); });
@@ -3569,8 +3613,8 @@ $("stBtn").addEventListener("click", async () => {
     const top = j.top.map(x => `<div><span>${escapeHTML(x.name)} <small style="color:var(--grey)">${escapeHTML(x.set)}</small> · ${x.qty}×</span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
     const avg = j.days.filter(d => d.sold).length ? j.revenue / j.days.filter(d => d.sold).length : 0;
     const fmtD = d => d.split("-").reverse().slice(0, 2).join("/");
-    const fairs = (j.fairs || []).map(x => `<div><span>${escapeHTML(x.fair)} <small style="color:var(--grey)">${x.first === x.last ? fmtD(x.first) : fmtD(x.first) + " – " + fmtD(x.last)} · ${x.sold}×</small></span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
-    out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}${tile(fmtPrice(avg), "gemiddeld per verkoopdag")}</div>` + bars +
+    const fairs = (j.fairs || []).map(x => `<div><span>${escapeHTML(x.fair)} <small style="color:var(--grey)">${x.first === x.last ? fmtD(x.first) : fmtD(x.first) + " – " + fmtD(x.last)} · ${x.sold}×${x.profit !== undefined ? " · winst " + fmtPrice(x.profit) : ""}</small></span><b>${fmtPrice(x.revenue)}</b></div>`).join("");
+    out.innerHTML = `<div class="day-tiles">${tile(j.sold, "kaarten verkocht")}${tile(fmtPrice(j.revenue), "omzet")}${tile(j.bought, "kaarten ingekocht")}${tile(fmtPrice(j.cost), "inkoop uitgegeven")}${tile(fmtPrice(j.revenue - j.cost), "omzet min inkoop")}${j.profit !== undefined && j.sold ? tile(fmtPrice(j.profit), "winst op verkochte kaarten") : ""}${tile(fmtPrice(avg), "gemiddeld per verkoopdag")}</div>` + (j.unknownQty ? `<div style="font-size:12px;color:var(--grey);margin-top:6px;">Winst: ${j.unknownQty} verkochte kaart(en) zonder gelogde aankoopprijs zijn niet meegerekend.</div>` : "") + bars +
       (fairs ? `<div class="st-h">Omzet per beurs</div><div class="day-list">${fairs}</div>` : "") + (sets ? `<div class="st-h">Best verkochte sets</div><div class="day-list">${sets}</div>` : "") +
       (top ? `<div class="st-h">Best verkochte kaarten</div><div class="day-list">${top}</div>` : `<div style="color:var(--grey);font-size:13px;">Geen verkopen in deze periode.</div>`) +
       `<div class="export-row"><button class="btn btn-yellow" type="button" id="stExp">⬇ Download CSV</button></div>`;
@@ -3927,6 +3971,13 @@ function buyRef(c){
 }
 const BUY_SRC = { eu: "Lowest EU", manual: "zelf ingevuld", "": "" };
 const buyBid = l => (typeof l.lowest === "number" && l.lowest > 0) ? buyR2(l.lowest * buyPct / 100) : null;
+/* totaal bod automatisch afgerond op hele euro's; de prijs per kaart wordt evenredig bijgesteld zodat de boeking klopt */
+function buyOffer(){
+  let raw = 0; buyLines.forEach(l => { const b = buyBid(l); if (b !== null) raw += b * l.qty; });
+  raw = buyR2(raw); const rounded = Math.round(raw);
+  return { raw, rounded, factor: raw > 0 ? rounded / raw : 1 };
+}
+const buyPay = (l, o) => buyR2(buyBid(l) * o.factor);
 function buyRender(){
   const box = $("buyLines");
   box.innerHTML = buyLines.length ? buyLines.map((l, i) => {
@@ -3940,7 +3991,8 @@ function buyRender(){
 function buyTotals(){
   let mkt = 0, bid = 0, n = 0, miss = 0;
   buyLines.forEach(l => { n += l.qty; const b = buyBid(l); if (b === null){ miss++; return; } mkt += l.lowest * l.qty; bid += b * l.qty; });
-  $("buyTot").innerHTML = `<div>Marktwaarde<b>${fmtPrice(buyR2(mkt))}</b></div><div class="hl">Mijn bod (${buyPct}%)<b>${fmtPrice(buyR2(bid))}</b></div>` + (buyLines.length ? `<div>Kaarten<b>${n}</b></div>` : "");
+  const of = buyOffer();
+  $("buyTot").innerHTML = `<div>Marktwaarde<b>${fmtPrice(buyR2(mkt))}</b></div><div class="hl">Mijn bod (${buyPct}%, afgerond)<b>${fmtPrice(of.rounded)}</b>${of.raw !== of.rounded ? `<span style="font-weight:500;font-size:12px">berekend: ${fmtPrice(of.raw)}</span>` : ""}</div>` + (buyLines.length ? `<div>Kaarten<b>${n}</b></div>` : "");
   const m = $("buyMsg");
   if (miss){ m.className = "sf-msg err"; m.textContent = miss + " kaart(en) zonder Lowest EU: vul de Lowest EU in de sheet in, of hier ter plekke, om het bod te kunnen berekenen."; }
   else if (!buyBusy && m.className.indexOf("ok") < 0){ m.className = "sf-msg"; m.textContent = ""; }
@@ -4002,19 +4054,19 @@ $("buyConfirm").addEventListener("click", async () => {
   if (buyBusy) return; const m = $("buyMsg");
   if (!buyLines.length){ m.className = "sf-msg err"; m.textContent = "Voeg eerst kaarten toe."; return; }
   if (buyLines.some(l => buyBid(l) === null)){ m.className = "sf-msg err"; m.textContent = "Vul bij alle kaarten de Lowest EU in."; return; }
-  const tot = buyR2(buyLines.reduce((t, l) => t + buyBid(l) * l.qty, 0)), cnt = buyLines.reduce((t, l) => t + l.qty, 0);
+  const OF = buyOffer(), tot = OF.rounded, cnt = buyLines.reduce((t, l) => t + l.qty, 0);
   if (!buyArm){ buyArm = 1; $("buyConfirm").textContent = `Tik nogmaals: ${cnt} kaarten voor ${fmtPrice(tot)} registreren`; setTimeout(() => { if (!buyBusy){ buyArm = 0; $("buyConfirm").textContent = "Inkoop bevestigen"; } }, 6000); return; }
   buyBusy = true; buyArm = 0; $("buyConfirm").disabled = true; m.className = "sf-msg"; m.textContent = "Bezig met registreren…";
   let done = 0, paid = 0, err = null; const left = [];
   for (const l of buyLines){
-    const bid = buyBid(l);
+    const bid = buyPay(l, OF);
     const payload = Object.assign({ action: "add", set: l.set, number: l.number, name: l.name, qty: l.qty, purchasePrice: bid }, l.known && l.card ? matchOf(l.card) : {});
     try { const j = await apiCall(payload); afterWrite(l.card || { set: l.set, number: l.number, name: l.name }, j, { set: l.set, number: l.number, name: l.name }); done += l.qty; paid += bid * l.qty; }
     catch(e){ err = e.message || String(e); left.push(l); }
   }
   buyLines = left; buyBusy = false; $("buyConfirm").disabled = false; buyRender();
   if (err){ m.className = "sf-msg err"; m.textContent = `${done} kaart(en) geregistreerd (${fmtPrice(buyR2(paid))}). Mislukt: ${err}. De niet-geregistreerde kaarten staan nog in de lijst.`; }
-  else { m.className = "sf-msg ok"; m.textContent = `Inkoop geregistreerd ✓ ${done} kaarten voor ${fmtPrice(buyR2(paid))}. Voorraad is opgehoogd en alles staat in de Log en het dagoverzicht.`; }
+  else { m.className = "sf-msg ok"; m.textContent = `Inkoop geregistreerd ✓ ${done} kaarten voor ${fmtPrice(tot)}. Voorraad is opgehoogd en alles staat in de Log en het dagoverzicht.`; }
 });
 
 
@@ -4026,8 +4078,8 @@ $("buyOffer").addEventListener("click", () => {
   let mkt = 0, bid = 0;
   $("offerList").innerHTML = buyLines.map((l, i) => { mkt += l.lowest * l.qty; bid += buyBid(l) * l.qty;
     return `<div class="of-row"><div class="th" id="ofTh${i}"></div><div class="nm">${escapeHTML(l.name)}<small>${escapeHTML(l.set)}${l.number ? " · " + escapeHTML(l.number) : ""}${l.qty > 1 ? " · " + l.qty + "×" : ""}</small></div><div class="pr">${fmtPrice(buyR2(l.lowest * l.qty))}<small>${l.qty > 1 ? fmtPrice(l.lowest) + " per kaart" : "marktwaarde"}</small></div></div>`; }).join("");
-  fxBid = buyR2(bid);
-  $("offerTot").innerHTML = `<div>Marktwaarde<b>${fmtPrice(buyR2(mkt))}</b></div><div class="hl">Ons aankoopvoorstel<b>${fmtPrice(buyR2(bid))}</b></div>`;
+  fxBid = buyOffer().rounded;
+  $("offerTot").innerHTML = `<div>Marktwaarde<b>${fmtPrice(buyR2(mkt))}</b></div><div class="hl">Ons aankoopvoorstel<b>${fmtPrice(fxBid)}</b></div>`;
   $("offerBackdrop").classList.add("show");
   buyLines.forEach((l, i) => { resolveImage(l.name, l.set, l.number).then(base => { const t = $("ofTh" + i); if (base && t) t.innerHTML = `<img src="${escapeHTML(imgSrc(base, "low"))}" alt="">`; }).catch(() => {}); });
 });
@@ -4078,6 +4130,90 @@ $("offerAccept").addEventListener("click", async () => {
   if (!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) fxConfetti();
 });
 $("fxDone").addEventListener("click", () => { fxStop(); $("offerBackdrop").classList.remove("show"); });
+
+
+/* ---- v87: dealhulp per kaart (aankoop, marktwaarde, minimumprijs, marge) ---- */
+function renderDeal(c){
+  const box = $("dealBox"); if (!box) return;
+  if (!adminUnlocked || !c || c.manual){ box.style.display = "none"; return; }
+  const o = c.orig || c, key = nkey(o.name, o.set, o.number), ba = buyAvgCache[key];
+  const avg = ba && ba.n ? ba.avg : null, eu = (typeof c.lowestEu === "number" && c.lowestEu > 0) ? c.lowestEu : null;
+  const vkp = (typeof c.vkp === "number" && c.vkp > 0) ? c.vkp : null, mn = (typeof c.minPrice === "number" && c.minPrice > 0) ? c.minPrice : null;
+  box.style.display = ""; { const old = $("buyAvg"); if (old) old.style.display = "none"; }
+  const cell = (l, v, cls) => `<div class="${cls || ""}">${l}<b>${v}</b></div>`;
+  $("dealGrid").innerHTML = cell("Gem. aankoopprijs", avg === null ? (ba ? "nog geen aankoop" : "…") : fmtPrice(avg)) + cell("Marktwaarde", eu === null ? "–" : fmtPrice(eu)) + cell("Minimumprijs", mn === null ? "niet ingesteld" : fmtPrice(mn), "min") + cell("Verkoopprijs", vkp === null ? "–" : fmtPrice(vkp));
+  const mg = (p) => avg === null || p === null ? null : { eur: p - avg, pct: avg > 0 ? (p - avg) / avg * 100 : null };
+  const f = x => x === null ? "" : `<span class="${x.eur < 0 ? "neg" : ""}">${x.eur >= 0 ? "+" : "−"}${fmtPrice(Math.abs(Math.round(x.eur * 100) / 100))}${x.pct === null ? "" : " (" + Math.round(x.pct) + "%)"}</span>`;
+  const a = mg(vkp), b = mg(mn);
+  $("dealNote").innerHTML = (a ? "Winst bij verkoopprijs: " + f(a) : "") + (a && b ? "<br>" : "") + (b ? "Winst bij minimumprijs: " + f(b) : "") + (!a && !b ? "Marge wordt getoond zodra er een aankoopprijs gelogd is." : "");
+  if (document.activeElement !== $("sfMin")) $("sfMin").value = mn === null ? "" : String(mn).replace(".", ",");
+}
+$("sfMinSave").addEventListener("click", () => staffRun("sfMinSave", async () => {
+  const c = modalCard; if (!c) return;
+  const raw = $("sfMin").value.trim(), v = raw === "" ? null : parseMoney(raw);
+  if (raw !== "" && (v === null || v < 0)){ sfMsg("Ongeldige minimumprijs.", false); return; }
+  const j = await apiCall(Object.assign({ action: "update", set: c.set, number: c.number, name: c.name, minPrice: v === null ? "" : v }, matchOf(c)));
+  c.minPrice = v;
+  { const k = nkey(c.name, c.set, c.number); allCards.forEach(x => { if (nkey(x.name, x.set, x.number) === k) x.minPrice = v; }); csvCards.forEach(x => { if (nkey(x.name, x.set, x.number) === k) x.minPrice = v; }); }
+  renderDeal(c); sfMsg(okTxt(j, "Minimumprijs opgeslagen ✓"), true);
+}));
+
+
+/* ---- v87: voorraadinzicht & beursrapport ---- */
+const invTile = (v, l) => `<div class="day-tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+$("invBtn").addEventListener("click", async () => {
+  const m = $("invMsg"), out = $("invOut"); m.className = "sf-msg"; m.textContent = "Bezig…"; out.innerHTML = "";
+  try {
+    const j = await apiCall({ action: "inzicht" });
+    if (!j.stock) throw new Error("Het script is nog niet bijgewerkt naar versie 22.");
+    m.textContent = ""; const s = j.stock;
+    const maxQ = Math.max(1, ...j.aging.map(a => a.qty));
+    const notes = [];
+    if (s.noCostQty) notes.push(s.noCostQty + " kaart(en) zonder gelogde aankoopprijs zijn niet meegeteld in inkoopwaarde en winst.");
+    if (s.noEuQty) notes.push(s.noEuQty + " kaart(en) zonder Lowest EU zijn niet meegeteld in de marktwaarde.");
+    const age = j.aging.map(a => `<div class="row"><span class="lb">${escapeHTML(a.label)}</span><span class="bar"><i style="width:${Math.round(a.qty / maxQ * 100)}%"></i></span><span class="v">${a.qty}× · ${fmtPrice(a.value)}</span></div>`).join("");
+    const old = (j.oldest || []).map(x => `<div><span>${escapeHTML(x.name)} <small style="color:var(--grey)">${escapeHTML(x.set)}${x.number ? " · " + escapeHTML(x.number) : ""} · ${x.qty}×</small></span><b>${x.days} dagen</b></div>`).join("");
+    const bm = (j.belowMin || []).map(x => `<div><span>${escapeHTML(x.name)} <small style="color:var(--grey)">${escapeHTML(x.set)}${x.number ? " · " + escapeHTML(x.number) : ""}</small></span><b>${fmtPrice(x.vkp)} &lt; ${fmtPrice(x.min)}</b></div>`).join("");
+    out.innerHTML = `<div class="day-tiles">${invTile(s.qty, "kaarten in voorraad (" + s.cards + " verschillende)")}${invTile(fmtPrice(s.cost), "inkoopwaarde")}${invTile(fmtPrice(s.vkpValue), "verkoopwaarde")}${invTile(fmtPrice(s.euValue), "marktwaarde (Lowest EU)")}${invTile(fmtPrice(s.unrealized), "onrealiseerde winst")}</div>` +
+      (notes.length ? `<div style="font-size:12px;color:var(--grey);margin-top:6px;">${notes.join("<br>")}</div>` : "") +
+      `<div class="st-h">Leeftijd van je voorraad</div><div class="inv-age">${age}</div><div style="font-size:12px;color:var(--grey);margin-top:4px;">Leeftijd = dagen sinds de aankoop of bijvulling. Er wordt van uitgegaan dat de oudste kaarten het eerst verkocht worden.</div>` +
+      (old ? `<div class="st-h">Langst in voorraad</div><div class="day-list">${old}</div>` : "") +
+      (bm ? `<div class="st-h">Verkoopprijs onder minimumprijs (${j.belowMinCount})</div><div class="day-list">${bm}</div>` : "");
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+});
+let fairData = [];
+function fairNetHtml(f){
+  if (f.fee === null || f.fee === undefined) return '<span class="net">vul standgeld in</span>';
+  const n = Math.round((f.profit - f.fee) * 100) / 100;
+  return `<span class="net ${n < 0 ? "neg" : "pos"}">${n < 0 ? "−" : "+"}${fmtPrice(Math.abs(n))}</span>`;
+}
+$("fairBtn").addEventListener("click", async () => {
+  const m = $("fairMsg2"), out = $("fairOut"); m.className = "sf-msg"; m.textContent = "Bezig…"; out.innerHTML = "";
+  try {
+    const j = await apiCall({ action: "fairreport" });
+    if (!j.fairs) throw new Error("Het script is nog niet bijgewerkt naar versie 22.");
+    fairData = j.fairs; m.textContent = "";
+    const fmtD = d => d.split("-").reverse().join("/");
+    out.innerHTML = fairData.length ? fairData.map((f, i) => `<div class="fair-card" data-i="${i}">
+      <h5>${escapeHTML(f.fair)}</h5><div class="sub">${f.first === f.last ? fmtD(f.first) : fmtD(f.first) + " – " + fmtD(f.last)} · ${f.days} dag(en)</div>
+      <div class="day-tiles">${invTile(fmtPrice(f.revenue), "omzet (" + f.sold + " kaarten)")}${invTile(fmtPrice(f.profit), "winst op verkochte kaarten")}${invTile(fmtPrice(f.cost), "ingekocht op de beurs (" + f.bought + ")")}</div>
+      ${f.unknownQty ? `<div style="font-size:12px;color:var(--grey);margin-top:4px;">${f.unknownQty} verkochte kaart(en) zonder aankoopprijs zijn niet in de winst meegeteld.</div>` : ""}
+      ${f.fair === "(geen beurs)" ? "" : `<div class="fee"><div class="field" style="flex:1;margin:0;"><label>Standgeld (€)</label><input type="text" inputmode="decimal" class="fee-in" value="${f.fee === null ? "" : String(f.fee).replace(".", ",")}" placeholder="bv. 85"></div><button type="button" class="btn btn-ghost" data-fee="${i}" style="flex:none;">Opslaan</button></div><div style="margin-top:8px;">Winst na standgeld: <span class="netwrap">${fairNetHtml(f)}</span></div>`}
+    </div>`).join("") : '<div style="color:var(--grey);font-size:13px;">Nog geen verkopen of aankopen met een beursnaam gevonden.</div>';
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+});
+$("fairOut").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-fee]"); if (!b) return;
+  const f = fairData[+b.dataset.fee], card = b.closest(".fair-card"), inp = card.querySelector(".fee-in"), raw = inp.value.trim();
+  const v = raw === "" ? null : parseMoney(raw), m = $("fairMsg2");
+  if (raw !== "" && (v === null || v < 0)){ m.className = "sf-msg err"; m.textContent = "Ongeldig standgeld."; return; }
+  b.disabled = true; m.className = "sf-msg"; m.textContent = "Bezig…";
+  try {
+    await apiCall({ action: "fairfee", name: f.fair, fee: v === null ? "" : v });
+    f.fee = v; card.querySelector(".netwrap").innerHTML = fairNetHtml(f); m.className = "sf-msg ok"; m.textContent = "Standgeld opgeslagen ✓";
+  } catch(err){ m.className = "sf-msg err"; m.textContent = err.message || String(err); }
+  b.disabled = false;
+});
 
 /* ---- v42: rustscherm (tablet staat stil → toont topkaarten) ---- */
 let idleTimer = null, idleRot = null, idleList = [], idleIdx = 0;
