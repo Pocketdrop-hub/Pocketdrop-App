@@ -560,20 +560,6 @@
   #idleScreen::before{ width:520px; height:520px; right:-160px; bottom:-200px; background:rgba(255,255,255,.12); }
   #idleScreen::after{ width:340px; height:340px; left:-110px; top:-120px; background:rgba(255,203,5,.2); }
   #idleScreen > *{ position:relative; z-index:1; }
-  .idle-logo{ height:min(24vh,200px); width:auto; filter:drop-shadow(0 4px 8px rgba(0,40,80,.35)); }
-  .idle-stage{ display:flex; align-items:center; justify-content:center; gap:26px; height:min(38vh,330px); }
-  .idle-card{ height:100%; aspect-ratio:5/7; transition:transform .8s ease, opacity .8s ease; border-radius:14px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; }
-  .idle-card img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 12px 22px rgba(0,30,60,.45)); border-radius:10px; }
-  .idle-card.side{ transform:scale(.72); opacity:.55; }
-  .idle-card.mid{ transform:scale(1); }
-  @media (prefers-reduced-motion:no-preference){ .idle-card.mid{ animation:idleFloat 4s ease-in-out infinite; } }
-  @keyframes idleFloat{ 0%,100%{ translate:0 0; } 50%{ translate:0 -8px; } }
-  .idle-info{ min-height:58px; }
-  .idle-name{ font-family:var(--font-display); font-weight:800; font-size:26px; text-shadow:0 2px 0 rgba(0,40,80,.25); }
-  .idle-price{ font-weight:800; font-size:22px; color:#FFCB05; }
-  .idle-cta{ margin-top:6px; display:inline-block; padding:14px 30px; border-radius:999px; background:#FFCB05; color:#10181C; font-family:var(--font-display); font-weight:800; font-size:20px; box-shadow:0 8px 18px rgba(0,30,60,.3); animation:idlePulse 2.2s ease-in-out infinite; }
-  @keyframes idlePulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.06); } }
-  @media (max-width:560px){ .idle-card.side{ display:none; } .idle-logo{ height:100px; } }
 
   /* v45: QR-code naar de app */
   .idle-qr{ position:absolute !important; right:22px; bottom:22px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.95); color:#10181C; border-radius:14px; padding:8px 12px 8px 8px; font-weight:700; font-size:14px; line-height:1.3; text-align:left; max-width:290px; box-shadow:0 8px 18px rgba(0,30,60,.3); }
@@ -705,29 +691,7 @@
   .wish-consent input{ margin-top:3px; width:18px; height:18px; flex:none; }
   .wish-done{ text-align:center; padding:26px 8px; } .wish-done .big{ font-size:46px; } .wish-done h3{ margin:8px 0 6px; font-family:var(--font-display); }
 
-  /* ---------- v71: vingertje dat tikt op het rustscherm ---------- */
-  .idle-cta-wrap{ position:relative; display:inline-block; margin-top:6px; }
-  .idle-cta-wrap .idle-cta{ margin-top:0; }
-  .idle-finger{ position:absolute; width:58px; height:75px; left:50%; top:30px; margin-left:-6px; pointer-events:none; filter:drop-shadow(0 8px 10px rgba(0,30,60,.4)); transform-origin:30% 10%; animation:idleFinger 2.6s ease-in-out infinite; }
-  .idle-ripple{ position:absolute; left:50%; top:28px; width:46px; height:46px; margin-left:-23px; border-radius:50%; border:4px solid #fff; opacity:0; pointer-events:none; animation:idleRipple 2.6s ease-out infinite; }
-  @keyframes idleFinger{
-    0%{ transform:translate(90px,90px) rotate(-12deg) scale(1); opacity:0; }
-    20%{ transform:translate(0,0) rotate(-12deg) scale(1); opacity:1; }
-    34%{ transform:translate(0,10px) rotate(-12deg) scale(.9); opacity:1; }
-    46%{ transform:translate(0,0) rotate(-12deg) scale(1); opacity:1; }
-    60%{ transform:translate(0,10px) rotate(-12deg) scale(.9); opacity:1; }
-    72%{ transform:translate(0,0) rotate(-12deg) scale(1); opacity:1; }
-    90%,100%{ transform:translate(90px,90px) rotate(-12deg) scale(1); opacity:0; }
-  }
-  @keyframes idleRipple{
-    0%,30%{ opacity:0; transform:scale(.4); }
-    34%{ opacity:.9; transform:scale(.5); } 50%{ opacity:0; transform:scale(2); }
-    58%{ opacity:0; transform:scale(.4); } 60%{ opacity:.9; transform:scale(.5); } 76%,100%{ opacity:0; transform:scale(2); }
-  }
-  @media (prefers-reduced-motion: reduce){ .idle-finger, .idle-ripple{ animation:none; } .idle-finger{ opacity:1; } }
-
   /* ---------- v72: rustscherm-animatie met echte kaarten ---------- */
-  #idleScreen .idle-logo, #idleScreen .idle-stage, #idleScreen .idle-info, #idleScreen .idle-cta-wrap{ display:none; }
   #idleAnim{ position:absolute !important; inset:0; z-index:0 !important; overflow:hidden; }
   #idleAnim *{ box-sizing:border-box; }
   .ia-bg{ position:absolute; inset:0; }
@@ -801,7 +765,6 @@
 @keyframes fxIn{from{opacity:0}to{opacity:1}}
 @keyframes fxFly{0%{opacity:0;transform:translate(0,260px) scale(.3) rotate(0)}60%{opacity:1}100%{opacity:1;transform:translate(var(--x),var(--y)) scale(1) rotate(var(--r))}}
 @keyframes fxShine{0%{background-position:150% 0}60%,100%{background-position:-50% 0}}
-@keyframes fxHolo{0%{background-position:0% 50%}100%{background-position:250% 50%}}
 @keyframes fxPop{0%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
 @keyframes fxUp{0%{opacity:0;transform:translateY(24px)}100%{opacity:1;transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){#offerFx.on .fx-fc,#offerFx.on .fx-more,#offerFx.on .fx-tick,#offerFx.on .fx-logo,#offerFx.on .fx-deal,#offerFx.on .fx-thx,#offerFx.on .fx-done{animation:none;opacity:1}}
@@ -841,10 +804,6 @@
 <body>
 
 <div id="idleScreen" role="button" aria-label="Tik om te beginnen">
-  <img class="idle-logo" id="idleLogo" alt="Pocketdrop">
-  <div class="idle-stage" id="idleStage"></div>
-  <div class="idle-info"><div class="idle-name" id="idleName"></div><div class="idle-price" id="idlePrice"></div></div>
-  <div class="idle-cta-wrap"><div class="idle-cta" id="idleCta">Tik om te beginnen</div><span class="idle-ripple"></span><svg class="idle-finger" viewBox="0 0 100 130" aria-hidden="true"><path d="M38 8c-6 0-10 4-10 10v52l-9-9c-4-4-10-4-14 0-3 3-3 8 0 11l28 36c6 8 14 12 24 12h14c14 0 24-10 24-24V62c0-5-4-9-9-9-3 0-5 1-7 3-1-4-4-6-8-6-3 0-6 2-7 4-1-3-4-5-8-5-2 0-4 1-5 2V18c0-6-4-10-10-10z" fill="#fff" stroke="#10181C" stroke-width="4" stroke-linejoin="round"/></svg></div>
   <div class="idle-qr"><div id="idleQr"></div><span id="idleQrTxt">Scan en ontdek onze catalogus op je eigen telefoon</span></div>
 </div>
 <div id="netBar" class="net-bar" style="display:none;"></div>
@@ -906,7 +865,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v87</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v88</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -3247,7 +3206,6 @@ async function undoLastSale(btn){
 document.addEventListener("click", (e) => { const b = e.target.closest("button[data-undo]"); if (b) undoLastSale(b); });
 renderLastSale();
 let grpDisc = 0;
-function cartGross(){ return cart.reduce((a, l) => a + l.qty * (l.price || 0), 0); }
 /* korting: per kaart (l.disc, in euro voor die regel) + groepskorting verdeeld over aangevinkte regels */
 function cartCalc(){
   const c100 = x => Math.round(x * 100);
@@ -3831,7 +3789,6 @@ function applyStatic(){
   $("searchInput").placeholder = en ? "Search by name or number…" : "Zoek op naam of nummer…";
   set("heroH1", en ? "Discover our <span>full</span> catalogue" : "Ontdek onze <span>volledige</span> catalogus");
   set("heroP", en ? "Look for your favourite Pokémon. Can't find what you're looking for? Just ask: &ldquo;Can you help me please?&rdquo;" : NL_HERO_P);
-  set("idleCta", en ? "Tap to start" : "Tik om te beginnen");
   set("idleQrTxt", en ? "Scan and discover our catalogue on your own phone" : "Scan en ontdek onze catalogus op je eigen telefoon");
   set("footTxt", en ? "Pocketdrop — the magic of Pokémon cards, at every fair." : "Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.");
   set("backToSetsBtn", "← Sets");
@@ -4216,7 +4173,7 @@ $("fairOut").addEventListener("click", async (e) => {
 });
 
 /* ---- v42: rustscherm (tablet staat stil → toont topkaarten) ---- */
-let idleTimer = null, idleRot = null, idleList = [], idleIdx = 0;
+let idleTimer = null, idleList = [];
 function idleBlocked(){
   if (adminUnlocked) return true;
   return !!document.querySelector(".modal-backdrop.show:not(#wishBackdrop), .cart-backdrop.show, #scanBackdrop.show");
@@ -4231,29 +4188,19 @@ async function idleBuild(){
   }
   return out;
 }
-function idleDraw(){
-  try { iaFill(); } catch(e){}
-  const n = idleList.length, st = $("idleStage");
-  if (!n){ st.innerHTML = ""; $("idleName").textContent = L("Ontdek onze volledige catalogus", "Discover our full catalogue"); $("idlePrice").textContent = ""; return; }
-  const at = i => idleList[(idleIdx + i + n) % n];
-  const card = (x, cls) => `<div class="idle-card ${cls}"><img src="${x.url}" alt=""></div>`;
-  st.innerHTML = (n > 2 ? card(at(-1), "side") : "") + card(at(0), "mid") + (n > 1 ? card(at(1), "side") : "");
-  $("idleName").textContent = at(0).name; $("idlePrice").textContent = fmtPrice(at(0).price);
-}
+function idleDraw(){ try { iaFill(); } catch(e){} }
 async function showIdle(force){
   if (!force && idleBlocked()) { armIdle(); return; }
   const el = $("idleScreen"); if (el.classList.contains("show")) return;
   try { clearWish(); } catch(e){}
-  { const l = document.querySelector("#brandHome img"); if (l) $("idleLogo").src = l.src; }
-  idleList = []; idleIdx = 0; idleDraw();
+  idleList = []; idleDraw();
   el.classList.add("show");
   try { iaStart(); } catch(e){}
   idleList = await idleBuild(); idleDraw();
-  clearInterval(idleRot); idleRot = setInterval(() => { if (idleList.length > 1){ idleIdx = (idleIdx + 1) % idleList.length; idleDraw(); } }, 3800);
 }
 function hideIdle(){
   const el = $("idleScreen"); if (!el.classList.contains("show")) return;
-  el.classList.remove("show"); clearInterval(idleRot);
+  el.classList.remove("show");
   try { iaStop(); } catch(e){}
   try { clearWish(); } catch(e){}
   if (LANG !== DEFAULT_LANG) setLang(DEFAULT_LANG, true);
