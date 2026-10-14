@@ -760,6 +760,39 @@
   #iaFinger{ position:absolute; left:0; top:0; width:150px; height:195px; filter:drop-shadow(0 12px 14px rgba(0,30,60,.4)); opacity:0; }
   #iaLogo{ position:absolute; left:0; top:0; height:200px; width:auto; filter:drop-shadow(0 6px 14px rgba(0,30,60,.45)); }
 
+/* v83 accepteren-animatie */
+#offerFx{position:fixed;inset:0;z-index:100000;display:none;background:radial-gradient(circle at 50% 40%,#7BCFF3 0%,#2D9BE3 45%,#0B67A7 100%);overflow:hidden}
+#offerFx.on{display:block;animation:fxIn .4s ease-out}
+#offerFx canvas{position:absolute;inset:0;width:100%;height:100%}
+#offerFx .fx-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;color:#fff;padding:20px}
+.fx-card{width:min(210px,40vw);aspect-ratio:5/7;border-radius:16px;border:6px solid #FFCB05;background:linear-gradient(115deg,#fff 0%,#bfe6ff 25%,#ffd6f0 45%,#fff3b0 65%,#c9b6ff 85%,#fff 100%);background-size:250% 250%;box-shadow:0 18px 40px rgba(0,30,60,.45),0 0 50px rgba(255,203,5,.7);display:flex;align-items:center;justify-content:center;opacity:0;perspective:600px}
+.fx-card span{font-size:min(110px,20vw);font-weight:800;color:#2BB673;text-shadow:0 4px 0 rgba(0,0,0,.15)}
+#offerFx.on .fx-card{animation:fxCard 1.7s cubic-bezier(.2,.8,.2,1) .15s forwards,fxHolo 2.4s linear infinite}
+.fx-logo{width:min(170px,34vw);aspect-ratio:1;border-radius:50%;border:8px solid #FFCB05;background:#fff;overflow:hidden;box-shadow:0 12px 30px rgba(0,30,60,.4);opacity:0;position:absolute;right:max(14px,calc(50% - 300px));top:max(14px,8%)}
+.fx-logo img{width:100%;height:100%;display:block}
+#offerFx.on .fx-logo{animation:fxPop .7s cubic-bezier(.3,1.6,.5,1) 1.5s forwards}
+.fx-deal{font-size:min(110px,18vw);font-weight:800;line-height:1;color:#FFCB05;text-shadow:0 7px 0 rgba(8,60,110,.55),0 14px 30px rgba(0,30,60,.4);opacity:0;margin-top:10px}
+.fx-thx{font-size:min(36px,6vw);font-weight:700;text-shadow:0 3px 12px rgba(0,30,60,.5);opacity:0;max-width:640px}
+#offerFx.on .fx-deal{animation:fxPop .6s cubic-bezier(.3,1.6,.5,1) 1.4s forwards}
+#offerFx.on .fx-thx{animation:fxUp .6s ease-out 1.9s forwards}
+.fx-done{opacity:0;margin-top:12px;padding:14px 46px;font-size:20px;pointer-events:none}
+#offerFx.on .fx-done{animation:fxUp .6s ease-out 3.4s forwards;pointer-events:auto}
+@keyframes fxIn{from{opacity:0}to{opacity:1}}
+@keyframes fxCard{0%{opacity:0;transform:translateY(160px) scale(.3) rotateY(0)}35%{opacity:1;transform:translateY(-20px) scale(1.12) rotateY(540deg)}100%{opacity:1;transform:translateY(0) scale(1) rotateY(720deg)}}
+@keyframes fxHolo{0%{background-position:0% 50%}100%{background-position:250% 50%}}
+@keyframes fxPop{0%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
+@keyframes fxUp{0%{opacity:0;transform:translateY(24px)}100%{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){#offerFx.on .fx-card,#offerFx.on .fx-logo,#offerFx.on .fx-deal,#offerFx.on .fx-thx,#offerFx.on .fx-done{animation:none;opacity:1}}
+/* v81 klantenvoorstel */
+.offer-list .of-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.1)}
+.offer-list .th{width:56px;height:78px;flex:none;border-radius:8px;background:var(--cream-alt,#f3efe6);overflow:hidden}
+.offer-list .th img{width:100%;height:100%;object-fit:contain;display:block}
+.offer-list .nm{flex:1;font-weight:700;font-size:17px}.offer-list .nm small{display:block;font-weight:500;color:var(--grey);font-size:13px}
+.offer-list .pr{text-align:right;font-weight:800;font-size:19px;color:#0B67A7}.offer-list .pr small{display:block;font-weight:500;color:var(--grey);font-size:12px}
+.offer-tot{display:flex;gap:12px;margin-top:16px}
+.offer-tot div{flex:1;border-radius:18px;padding:16px;text-align:center;font-size:14px;color:var(--grey);background:#fff;box-shadow:0 4px 14px rgba(0,30,60,.12)}
+.offer-tot b{display:block;font-size:32px;color:#10181C;margin-top:4px}
+.offer-tot div.hl{background:#FFCB05;color:#10181C;font-weight:700}
 /* v78 inkoopcalculator */
 .buy-pct{display:flex;gap:8px}
 .buy-pct button{flex:1;padding:14px 0;border-radius:14px;border:2px solid var(--card-line);background:#fff;font:inherit;font-weight:800;font-size:18px;cursor:pointer}
@@ -851,7 +884,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v80</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v84</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1239,12 +1272,26 @@
       <div class="admin-section-title" style="margin:16px 0 6px;">Kaarten van de verkoper</div>
       <div id="buyLines" class="buy-lines"></div>
       <div class="buy-tot" id="buyTot"></div>
+      <button type="button" class="btn btn-primary" id="buyOffer" style="width:100%;margin-top:12px;">👀 Klantenvoorstel tonen</button>
       <button type="button" class="btn btn-yellow" id="buyConfirm" style="width:100%;margin-top:12px;">Inkoop bevestigen</button>
       <button type="button" class="btn btn-ghost" id="buyClear" style="width:100%;margin-top:8px;">Lijst leegmaken</button>
       <div class="sf-msg" id="buyMsg"></div>
     </div>
   </div>
 </div>
+<div class="modal-backdrop" id="offerBackdrop" style="background:#EAF6FF;">
+  <div class="modal" id="offerModal" style="max-width:760px;">
+    <div class="admin-body" style="padding-top:26px;">
+      <h3 style="margin:0 0 14px;font-size:26px;">Ons voorstel voor jouw kaarten</h3>
+      <div id="offerList" class="offer-list"></div>
+      <div class="offer-tot" id="offerTot"></div>
+      <button type="button" class="btn btn-yellow" id="offerAccept" style="width:100%;margin-top:16px;font-size:20px;padding:18px 0;">Ik accepteer jullie aanbod</button>
+      <button type="button" class="btn btn-ghost" id="offerBack" style="width:100%;margin-top:16px;">← Terug</button>
+    </div>
+  </div>
+</div>
+<div id="offerFx" aria-hidden="true"><canvas id="offerCv"></canvas>
+  <div class="fx-center"><div class="fx-card" id="fxCard"><span>✓</span></div><div class="fx-logo" id="fxLogo"><img src="hero.png" alt="Pa &amp; Ma"></div><div class="fx-deal" id="fxDeal">Deal!</div><div class="fx-thx" id="fxThx"></div><button type="button" class="btn btn-yellow fx-done" id="fxDone">Klaar</button></div></div>
 <div class="modal-backdrop" id="wishBackdrop">
   <div class="modal" id="wishModal">
     <button class="close-x" id="closeWish">✕</button>
@@ -3962,6 +4009,56 @@ $("buyConfirm").addEventListener("click", async () => {
   if (err){ m.className = "sf-msg err"; m.textContent = `${done} kaart(en) geregistreerd (${fmtPrice(buyR2(paid))}). Mislukt: ${err}. De niet-geregistreerde kaarten staan nog in de lijst.`; }
   else { m.className = "sf-msg ok"; m.textContent = `Inkoop geregistreerd ✓ ${done} kaarten voor ${fmtPrice(buyR2(paid))}. Voorraad is opgehoogd en alles staat in de Log en het dagoverzicht.`; }
 });
+
+
+/* ---- v81: klantenvoorstel (zonder percentages) ---- */
+$("buyOffer").addEventListener("click", () => {
+  const m = $("buyMsg");
+  if (!buyLines.length){ m.className = "sf-msg err"; m.textContent = "Voeg eerst kaarten toe."; return; }
+  if (buyLines.some(l => buyBid(l) === null)){ m.className = "sf-msg err"; m.textContent = "Vul bij alle kaarten de Lowest EU in voor je het voorstel toont."; return; }
+  let mkt = 0, bid = 0;
+  $("offerList").innerHTML = buyLines.map((l, i) => { mkt += l.lowest * l.qty; bid += buyBid(l) * l.qty;
+    return `<div class="of-row"><div class="th" id="ofTh${i}"></div><div class="nm">${escapeHTML(l.name)}<small>${escapeHTML(l.set)}${l.number ? " · " + escapeHTML(l.number) : ""}${l.qty > 1 ? " · " + l.qty + "×" : ""}</small></div><div class="pr">${fmtPrice(buyR2(l.lowest * l.qty))}<small>${l.qty > 1 ? fmtPrice(l.lowest) + " per kaart" : "marktwaarde"}</small></div></div>`; }).join("");
+  fxBid = buyR2(bid);
+  $("offerTot").innerHTML = `<div>Marktwaarde<b>${fmtPrice(buyR2(mkt))}</b></div><div class="hl">Ons aankoopvoorstel<b>${fmtPrice(buyR2(bid))}</b></div>`;
+  $("offerBackdrop").classList.add("show");
+  buyLines.forEach((l, i) => { resolveImage(l.name, l.set, l.number).then(base => { const t = $("ofTh" + i); if (base && t) t.innerHTML = `<img src="${escapeHTML(imgSrc(base, "low"))}" alt="">`; }).catch(() => {}); });
+});
+$("offerBack").addEventListener("click", () => $("offerBackdrop").classList.remove("show"));
+
+
+/* ---- v83: "Ik accepteer jullie aanbod" met feestanimatie ---- */
+let fxRaf = 0, fxBid = 0;
+function fxStop(){ cancelAnimationFrame(fxRaf); fxRaf = 0; $("offerFx").classList.remove("on"); }
+function fxConfetti(){
+  const cv = $("offerCv"), dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  const g = cv.getContext("2d"); g.scale(dpr, dpr);
+  const cols = ["#FFCB05", "#2D9BE3", "#E8456B", "#ffffff", "#7BCFF3", "#2BB673"], ps = [];
+  const burst = (x, y, n, power) => { for (let i = 0; i < n; i++){ const a = -Math.PI / 2 + (Math.random() - .5) * 1.6, v = power * (.5 + Math.random() * .7);
+    ps.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * 6.3, vr: (Math.random() - .5) * .3, w: 7 + Math.random() * 9, h: 4 + Math.random() * 6, c: cols[(Math.random() * cols.length) | 0], star: Math.random() < .25, life: 0 }); } };
+  const t0 = performance.now(); let b1 = 0, b2 = 0, b3 = 0;
+  const star = (s) => { g.beginPath(); for (let i = 0; i < 10; i++){ const rr = i % 2 ? s * .45 : s, a = i * Math.PI / 5 - Math.PI / 2; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill(); };
+  const tick = now => {
+    const t = (now - t0) / 1000;
+    if (!b1 && t > .5){ b1 = 1; burst(innerWidth * .2, innerHeight * .95, 70, 17); burst(innerWidth * .8, innerHeight * .95, 70, 17); }
+    if (!b2 && t > 1.4){ b2 = 1; burst(innerWidth * .5, innerHeight * .9, 110, 21); }
+    if (!b3 && t > 2.6){ b3 = 1; burst(innerWidth * .3, innerHeight * .95, 60, 16); burst(innerWidth * .7, innerHeight * .95, 60, 16); }
+    g.clearRect(0, 0, innerWidth, innerHeight);
+    ps.forEach(p => { p.vy += .35; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+      g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.c; g.globalAlpha = Math.max(0, 1 - p.life / 260);
+      if (p.star) star(p.w * .8); else g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore(); });
+    if (t < 6 && $("offerFx").classList.contains("on")) fxRaf = requestAnimationFrame(tick); else fxRaf = 0;
+  };
+  fxRaf = requestAnimationFrame(tick);
+}
+$("offerAccept").addEventListener("click", () => {
+  const fx = $("offerFx");
+  $("fxThx").textContent = "Bedankt! Wij betalen je " + fmtPrice(fxBid) + " voor je kaarten.";
+  fx.classList.remove("on"); void fx.offsetWidth; fx.classList.add("on");
+  if (!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) fxConfetti();
+});
+$("fxDone").addEventListener("click", () => { fxStop(); $("offerBackdrop").classList.remove("show"); });
 
 /* ---- v42: rustscherm (tablet staat stil → toont topkaarten) ---- */
 let idleTimer = null, idleRot = null, idleList = [], idleIdx = 0;
