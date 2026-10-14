@@ -704,6 +704,61 @@
   .wish-consent{ display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; margin:0 0 12px; }
   .wish-consent input{ margin-top:3px; width:18px; height:18px; flex:none; }
   .wish-done{ text-align:center; padding:26px 8px; } .wish-done .big{ font-size:46px; } .wish-done h3{ margin:8px 0 6px; font-family:var(--font-display); }
+
+  /* ---------- v71: vingertje dat tikt op het rustscherm ---------- */
+  .idle-cta-wrap{ position:relative; display:inline-block; margin-top:6px; }
+  .idle-cta-wrap .idle-cta{ margin-top:0; }
+  .idle-finger{ position:absolute; width:58px; height:75px; left:50%; top:30px; margin-left:-6px; pointer-events:none; filter:drop-shadow(0 8px 10px rgba(0,30,60,.4)); transform-origin:30% 10%; animation:idleFinger 2.6s ease-in-out infinite; }
+  .idle-ripple{ position:absolute; left:50%; top:28px; width:46px; height:46px; margin-left:-23px; border-radius:50%; border:4px solid #fff; opacity:0; pointer-events:none; animation:idleRipple 2.6s ease-out infinite; }
+  @keyframes idleFinger{
+    0%{ transform:translate(90px,90px) rotate(-12deg) scale(1); opacity:0; }
+    20%{ transform:translate(0,0) rotate(-12deg) scale(1); opacity:1; }
+    34%{ transform:translate(0,10px) rotate(-12deg) scale(.9); opacity:1; }
+    46%{ transform:translate(0,0) rotate(-12deg) scale(1); opacity:1; }
+    60%{ transform:translate(0,10px) rotate(-12deg) scale(.9); opacity:1; }
+    72%{ transform:translate(0,0) rotate(-12deg) scale(1); opacity:1; }
+    90%,100%{ transform:translate(90px,90px) rotate(-12deg) scale(1); opacity:0; }
+  }
+  @keyframes idleRipple{
+    0%,30%{ opacity:0; transform:scale(.4); }
+    34%{ opacity:.9; transform:scale(.5); } 50%{ opacity:0; transform:scale(2); }
+    58%{ opacity:0; transform:scale(.4); } 60%{ opacity:.9; transform:scale(.5); } 76%,100%{ opacity:0; transform:scale(2); }
+  }
+  @media (prefers-reduced-motion: reduce){ .idle-finger, .idle-ripple{ animation:none; } .idle-finger{ opacity:1; } }
+
+  /* ---------- v72: rustscherm-animatie met echte kaarten ---------- */
+  #idleScreen .idle-logo, #idleScreen .idle-stage, #idleScreen .idle-info, #idleScreen .idle-cta-wrap{ display:none; }
+  #idleAnim{ position:absolute !important; inset:0; z-index:0 !important; overflow:hidden; }
+  #idleAnim *{ box-sizing:border-box; }
+  .ia-bg{ position:absolute; inset:0; }
+  .ia-cloud{ position:absolute; left:0; top:0; border-radius:999px; background:rgba(255,255,255,.4); filter:blur(2px); will-change:transform; }
+  .ia-fcard{ position:absolute; left:0; top:0; width:120px; height:168px; border-radius:12px; will-change:transform; opacity:.5; }
+  .ia-fcard:not(.real){ border:4px solid #FFCB05; background:linear-gradient(135deg,#fff 0%,#bfe6ff 45%,#fff3b0 100%); }
+  .ia-fcard img{ width:100%; height:100%; object-fit:contain; border-radius:8px; filter:drop-shadow(0 10px 18px rgba(0,30,60,.4)); display:block; }
+  #iaWaves{ position:absolute; left:-110px; bottom:0; width:2700px; height:110px; }
+  .ia-stage{ position:absolute; left:50%; top:50%; width:1280px; height:720px; transform-origin:center center; font-family:var(--font-display); }
+  .ia-scene{ position:absolute; inset:0; opacity:0; }
+  .ia-abs{ position:absolute; left:0; top:0; }
+  .ia-title{ position:absolute; left:0; width:1280px; text-align:center; color:#fff; font-weight:800; line-height:1.1; text-shadow:0 5px 0 rgba(8,60,110,.55),0 10px 24px rgba(0,30,60,.35); }
+  .ia-ring{ border-radius:50%; border:10px solid #FFCB05; box-shadow:0 14px 34px rgba(0,30,60,.4); background:#fff; overflow:hidden; }
+  .ia-bar{ position:absolute; background:#fff; border-radius:999px; box-shadow:0 10px 26px rgba(0,30,60,.3); display:flex; align-items:center; padding:0 34px; font-weight:700; color:#10181C; text-align:left; }
+  .ia-ptag{ position:absolute; background:#FFCB05; color:#10181C; font-weight:800; border-radius:999px; padding:6px 18px; font-size:28px; box-shadow:0 4px 0 #b88f00; white-space:nowrap; }
+  .ia-rcard{ position:absolute; left:0; top:0; width:180px; height:252px; }
+  .ia-rcard img{ width:100%; height:100%; object-fit:contain; display:block; border-radius:12px; filter:drop-shadow(0 14px 20px rgba(0,30,60,.45)); }
+  .ia-rcard .gen{ position:absolute; inset:0; border-radius:16px; border:4px solid #FFCB05; background:linear-gradient(135deg,#fff 0%,#bfe6ff 45%,#fff3b0 100%); box-shadow:0 10px 24px rgba(0,30,60,.25); }
+  .ia-panel{ position:absolute; background:#fff; border-radius:26px; box-shadow:0 18px 40px rgba(0,30,60,.35); padding:14px 28px; color:#10181C; text-align:left; }
+  .ia-row{ display:flex; align-items:center; gap:18px; height:92px; border-bottom:2px solid #e3eef6; }
+  .ia-row:last-child{ border-bottom:none; }
+  .ia-row .th{ width:56px; height:78px; flex:none; }
+  .ia-row .th img{ width:100%; height:100%; object-fit:contain; display:block; border-radius:4px; }
+  .ia-row .th.gen{ border-radius:6px; background:linear-gradient(135deg,#bfe6ff,#fff3b0); border:2px solid #FFCB05; }
+  .ia-row .nm{ flex:1; font-weight:800; font-size:28px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ia-row .pr{ font-weight:800; font-size:28px; color:#0B67A7; }
+  .ia-row svg{ width:46px; height:46px; flex:none; }
+  .ia-btn{ position:absolute; background:linear-gradient(180deg,#FFE04D,#FFCB05); color:#10181C; font-weight:800; border-radius:999px; box-shadow:0 10px 0 #b88f00,0 22px 36px rgba(0,30,60,.4); display:flex; align-items:center; justify-content:center; }
+  .ia-ripple{ position:absolute; left:0; top:0; border-radius:50%; border:6px solid #fff; opacity:0; width:120px; height:120px; }
+  #iaFinger{ position:absolute; left:0; top:0; width:150px; height:195px; filter:drop-shadow(0 12px 14px rgba(0,30,60,.4)); opacity:0; }
+  #iaLogo{ position:absolute; left:0; top:0; height:200px; width:auto; filter:drop-shadow(0 6px 14px rgba(0,30,60,.45)); }
 </style>
 </head>
 <body>
@@ -712,7 +767,7 @@
   <img class="idle-logo" id="idleLogo" alt="Pocketdrop">
   <div class="idle-stage" id="idleStage"></div>
   <div class="idle-info"><div class="idle-name" id="idleName"></div><div class="idle-price" id="idlePrice"></div></div>
-  <div class="idle-cta" id="idleCta">Tik om te beginnen</div>
+  <div class="idle-cta-wrap"><div class="idle-cta" id="idleCta">Tik om te beginnen</div><span class="idle-ripple"></span><svg class="idle-finger" viewBox="0 0 100 130" aria-hidden="true"><path d="M38 8c-6 0-10 4-10 10v52l-9-9c-4-4-10-4-14 0-3 3-3 8 0 11l28 36c6 8 14 12 24 12h14c14 0 24-10 24-24V62c0-5-4-9-9-9-3 0-5 1-7 3-1-4-4-6-8-6-3 0-6 2-7 4-1-3-4-5-8-5-2 0-4 1-5 2V18c0-6-4-10-10-10z" fill="#fff" stroke="#10181C" stroke-width="4" stroke-linejoin="round"/></svg></div>
   <div class="idle-qr"><div id="idleQr"></div><span id="idleQrTxt">Scan en ontdek onze catalogus op je eigen telefoon</span></div>
 </div>
 <div id="netBar" class="net-bar" style="display:none;"></div>
@@ -774,7 +829,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v70</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v72</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1314,7 +1369,7 @@ const REFRESH_INTERVAL_MS = 3 * 60 * 1000; // 3 minuten
 const SEASON_OVERRIDE = "";   // "" = automatisch; of: standaard, halloween, kerst, valentijn
 const DEFAULT_LANG = "nl";    // "nl" of "en": taal waarmee de app start (voor Duitsland: "en"). Klanten kunnen bovenaan wisselen.
 const WISH_MAX = 30;           // maximum aantal kaarten op één verlanglijstje
-const IDLE_SECONDS = 120;   // na zoveel seconden zonder aanraking (0 = uitgeschakeld)
+const IDLE_SECONDS = 30;   // na zoveel seconden zonder aanraking (0 = uitgeschakeld)
 
 /* Namen van de opgeslagen gegevens op het toestel (niet wijzigen) */
 const API_SECRET_KEY = "pocketdrop_api_secret_v1";
@@ -3588,6 +3643,107 @@ function setLang(l, noRender){
 $("langBtn").addEventListener("click", () => setLang(LANG === "en" ? "nl" : "en"));
 applyStatic();
 
+/* ---- v72: rustscherm-animatie (14 sec, lus) met echte kaarten uit de winkel ---- */
+const IA = { built:false, raf:0, t0:0, key:"", vw:1280, vh:720, clouds:[], fcs:[], typed:"025", el:{} };
+const IA_D = 14;
+const iaClamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const iaEO = x => 1 - Math.pow(1 - iaClamp(x), 3);
+const iaEB = x => { x = iaClamp(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const IA_HEART = '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.5 4.8 6.8 4.8c2 0 3.7 1.1 5.2 3 1.5-1.9 3.2-3 5.2-3 3.3 0 5.1 3.2 4 6.4-1.7 4.7-9.2 9.3-9.2 9.3z" fill="#E8456B"/></svg>';
+function iaBuild(){
+  if (IA.built) return; IA.built = true;
+  const root = document.createElement("div"); root.id = "idleAnim";
+  root.innerHTML = `<div class="ia-bg"><div id="iaClouds"></div><div id="iaCards"></div><svg id="iaWaves" viewBox="0 0 2700 110"></svg></div>
+  <div class="ia-stage" id="iaStage">
+    <div class="ia-scene" id="iaS1"><div class="ia-ring ia-abs" id="iaHero" style="width:320px;height:320px"><img src="hero.png" width="300" height="300" alt="" style="display:block"></div>
+      <div class="ia-title" id="iaS1a" style="top:395px;font-size:78px"></div><div class="ia-title" id="iaS1b" style="top:505px;font-size:44px;font-weight:700"></div></div>
+    <div class="ia-scene" id="iaS2"><div class="ia-title" id="iaS2t" style="top:78px;font-size:76px"></div>
+      <div class="ia-bar" id="iaBar" style="left:230px;top:236px;width:820px;height:96px;font-size:38px"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" style="margin-right:20px;flex:none"><circle cx="11" cy="11" r="7" stroke="#10181C" stroke-width="2.4"/><path d="M21 21l-4.3-4.3" stroke="#10181C" stroke-width="2.4" stroke-linecap="round"/></svg><span id="iaTyped"></span><span id="iaCaret" style="width:3px;height:44px;background:#10181C;margin-left:3px;display:inline-block"></span></div>
+      <div id="iaRc"></div></div>
+    <div class="ia-scene" id="iaS3"><div class="ia-title" id="iaS3a" style="top:70px;font-size:70px"></div><div class="ia-title" id="iaS3b" style="top:160px;font-size:46px;font-weight:700"></div>
+      <div class="ia-panel" id="iaWp" style="left:300px;top:250px;width:680px;height:310px"></div></div>
+    <div class="ia-scene" id="iaS4"><img id="iaLogo" alt="">
+      <div class="ia-title" id="iaS4a" style="top:262px;font-size:72px"></div>
+      <div class="ia-btn" id="iaGo" style="left:380px;top:420px;width:520px;height:120px;font-size:46px"></div>
+      <div class="ia-ripple" id="iaRip"></div>
+      <svg id="iaFinger" viewBox="0 0 100 130"><path d="M38 8c-6 0-10 4-10 10v52l-9-9c-4-4-10-4-14 0-3 3-3 8 0 11l28 36c6 8 14 12 24 12h14c14 0 24-10 24-24V62c0-5-4-9-9-9-3 0-5 1-7 3-1-4-4-6-8-6-3 0-6 2-7 4-1-3-4-5-8-5-2 0-4 1-5 2V18c0-6-4-10-10-10z" fill="#fff" stroke="#10181C" stroke-width="4" stroke-linejoin="round"/></svg></div>
+  </div>`;
+  $("idleScreen").insertBefore(root, $("idleScreen").firstChild);
+  const g = id => document.getElementById(id);
+  ["iaS1","iaS2","iaS3","iaS4","iaHero","iaS1a","iaS1b","iaS2t","iaBar","iaTyped","iaCaret","iaRc","iaS3a","iaS3b","iaWp","iaLogo","iaS4a","iaGo","iaRip","iaFinger","iaStage","iaWaves"].forEach(id => { IA.el[id] = g(id); });
+  [[100,70,320,90,1],[700,150,420,110,2],[1000,40,260,70,1],[350,260,360,100,2],[-100,330,300,80,1]].forEach(c => {
+    const e = document.createElement("div"); e.className = "ia-cloud"; e.style.width = c[2] + "px"; e.style.height = c[3] + "px"; g("iaClouds").appendChild(e); IA.clouds.push({ x0: c[0], y: c[1], w: c[2], k: c[4], el: e });
+  });
+  [[60,0,1,-14],[220,.5,2,10],[420,.2,1,-8],[640,.7,2,12],[860,.35,1,-10],[1040,.9,2,8],[1160,.15,1,14],[150,.6,1,6]].forEach(c => {
+    const e = document.createElement("div"); e.className = "ia-fcard"; g("iaCards").appendChild(e); IA.fcs.push({ x: c[0], ph: c[1], k: c[2], rot: c[3], el: e });
+  });
+  const wp = (y, a) => { let d = "M-107 " + y; for (let i = -1; i < 26; i++){ const x = i * 106.67; d += ` Q ${x + 26.7} ${y - a} ${x + 53.3} ${y} T ${x + 106.67} ${y}`; } return d + " V110 H-107 Z"; };
+  IA.el.iaWaves.innerHTML = `<path id="iaW1" d="${wp(40, 12)}" fill="#7BCFF3" opacity=".6"/><path id="iaW2" d="${wp(62, 14)}" fill="#0B67A7"/>`;
+  IA.w1 = g("iaW1"); IA.w2 = g("iaW2");
+  window.addEventListener("resize", () => { try { iaLayout(); } catch(e){} });
+}
+function iaLayout(){
+  const sc = $("idleScreen"); IA.vw = sc.clientWidth || window.innerWidth; IA.vh = sc.clientHeight || window.innerHeight;
+  const s = Math.min(IA.vw / 1280, IA.vh / 720);
+  IA.el.iaStage.style.transform = `translate(-50%,-50%) scale(${s})`;
+}
+function iaFill(){
+  if (!IA.built) return;
+  const key = LANG + "|" + idleList.map(x => x.url).join(",");
+  if (key === IA.key) return; IA.key = key;
+  const en = LANG === "en", cards = idleList.slice(), n = cards.length, E = IA.el;
+  const at = i => n ? cards[((i % n) + n) % n] : null;
+  E.iaS1a.innerHTML = en ? "Hi! We are Pa &amp; Ma" : "Hoi! Wij zijn Pa &amp; Ma";
+  E.iaS1b.textContent = en ? "Welcome to Pocketdrop" : "Welkom bij Pocketdrop";
+  E.iaS2t.textContent = en ? "Find your favourite Pokémon" : "Zoek je favoriete Pokémon";
+  E.iaS3a.textContent = en ? "Missing a card?" : "Mis je een kaart?";
+  E.iaS3b.textContent = en ? "Add it to your wishlist" : "Zet hem op je verlanglijstje";
+  E.iaS4a.textContent = en ? "Ready to search?" : "Klaar om te zoeken?";
+  E.iaGo.textContent = en ? "Tap to start" : "Tik om te beginnen";
+  { const l = document.querySelector("#brandHome img"); if (l) E.iaLogo.src = l.src; }
+  IA.typed = n ? String(at(0).name).slice(0, 10) : "025";
+  IA.fcs.forEach((c, i) => { const x = at(i); c.el.className = "ia-fcard" + (x ? " real" : ""); c.el.innerHTML = x ? `<img src="${escapeHTML(x.url)}" alt="">` : ""; });
+  const samplePr = [1.5, 30, 90];
+  E.iaRc.innerHTML = [0, 1, 2].map(i => { const x = at(i); return `<div class="ia-rcard" id="iaRc${i}">${x ? `<img src="${escapeHTML(x.url)}" alt="">` : `<div class="gen"></div>`}<div class="ia-ptag" style="left:20px;bottom:-14px">${fmtPrice(x ? x.price : samplePr[i])}</div></div>`; }).join("");
+  E.iaWp.innerHTML = [0, 1, 2].map(i => { const x = at(i + 3); return `<div class="ia-row"><div class="th${x ? "" : " gen"}">${x ? `<img src="${escapeHTML(x.url)}" alt="">` : ""}</div><div class="nm">${x ? escapeHTML(x.name) : "—"}</div><div class="pr">${fmtPrice(x ? x.price : samplePr[i])}</div><span class="ia-h">${IA_HEART}</span></div>`; }).join("");
+}
+function iaSeg(t, a, b, f = .45){ return iaClamp((t - a) / f) * iaClamp((b - t) / f); }
+function iaSet(t){
+  const E = IA.el, D = IA_D, vw = IA.vw, vh = IA.vh;
+  IA.clouds.forEach(c => { const span = vw + c.w; const x = (((c.x0 / 1280 * vw + span * (c.k * t / D)) % span) + span) % span - c.w; c.el.style.transform = `translate(${x}px,${c.y / 720 * vh}px)`; });
+  IA.fcs.forEach(c => { const span = vh + 260; const y = (1 - ((c.ph + c.k * t / D) % 1)) * span - 200; const rot = Math.sin(2 * Math.PI * (t / D * c.k + c.ph)) * 10 + c.rot; c.el.style.transform = `translate(${c.x / 1280 * vw}px,${y}px) rotate(${rot}deg)`; });
+  { const sh = (t / D * 7 * 106.67) % 106.67; IA.w1.setAttribute("transform", `translate(${-sh},0)`); IA.w2.setAttribute("transform", `translate(${sh - 106.67},0)`); }
+  E.iaS1.style.opacity = iaSeg(t, .15, 3.55);
+  { const k = t - .15; E.iaHero.style.transform = `translate(480px,${50 + Math.sin(t * 2) * 6}px) scale(${.2 + .8 * iaEB(k / .7)})`;
+    E.iaS1a.style.transform = `translateY(${(1 - iaEO((k - .4) / .5)) * 40}px)`; E.iaS1a.style.opacity = iaEO((k - .4) / .5);
+    E.iaS1b.style.transform = `translateY(${(1 - iaEO((k - .8) / .5)) * 40}px)`; E.iaS1b.style.opacity = iaEO((k - .8) / .5); }
+  E.iaS2.style.opacity = iaSeg(t, 3.55, 7.05);
+  { const k = t - 3.6; E.iaS2t.style.transform = `translateY(${(1 - iaEO(k / .5)) * -40}px)`;
+    E.iaBar.style.transform = `scale(${.7 + .3 * iaEB((k - .2) / .5)})`; E.iaBar.style.opacity = iaClamp((k - .2) / .3);
+    const w = IA.typed, nn = Math.floor(iaClamp((k - .9) / 1.0) * w.length); E.iaTyped.textContent = w.slice(0, nn); E.iaCaret.style.opacity = (Math.floor(t * 2.5) % 2) ? 0 : 1;
+    for (let i = 0; i < 3; i++){ const kk = k - 1.5 - i * .28; const e = document.getElementById("iaRc" + i); if (!e) continue; e.style.opacity = iaClamp(kk / .25); e.style.transform = `translate(${330 + i * 230}px,${390 + (1 - iaEB(kk / .5)) * 120}px) rotate(${(i - 1) * 3}deg)`; } }
+  E.iaS3.style.opacity = iaSeg(t, 7.05, 10.55);
+  { const k = t - 7.1; E.iaS3a.style.transform = `translateY(${(1 - iaEO(k / .5)) * -40}px)`; E.iaS3b.style.opacity = iaEO((k - .3) / .4);
+    E.iaWp.style.transform = `translateY(${(1 - iaEB((k - .5) / .6)) * 120}px)`; E.iaWp.style.opacity = iaClamp((k - .5) / .3);
+    E.iaWp.querySelectorAll(".ia-h").forEach((h, i) => { const kk = k - 1.2 - i * .5; h.style.transform = `scale(${kk < 0 ? 0 : (kk < .5 ? iaEB(kk / .5) : 1)})`; h.style.opacity = kk < 0 ? 0 : 1; }); }
+  E.iaS4.style.opacity = iaSeg(t, 10.55, 13.95);
+  { const k = t - 10.6; E.iaLogo.style.transform = `translate(${640 - (E.iaLogo.clientWidth || 200) / 2}px,${30 + Math.sin(t * 2.2) * 5}px) scale(${.3 + .7 * iaEB(k / .6)})`;
+    E.iaS4a.style.opacity = iaEO((k - .3) / .4); E.iaS4a.style.transform = `translateY(${(1 - iaEO((k - .3) / .4)) * 30}px)`;
+    const pulse = 1 + .04 * Math.sin(t * 6), ap = iaEO((k - 1.0) / .9), tp = k - 1.9;
+    const pr = iaClamp(Math.max(0, Math.sin(iaClamp(tp / .35) * Math.PI)) + Math.max(0, Math.sin(iaClamp((tp - .9) / .35) * Math.PI)));
+    E.iaGo.style.transform = `scale(${pulse * (1 - .05 * pr)}) translateY(${pr * 6}px)`;
+    E.iaFinger.style.transform = `translate(${610 + (1 - ap) * 260}px,${470 + (1 - ap) * 230 + pr * 14}px) rotate(-12deg) scale(${1 - .07 * pr})`; E.iaFinger.style.opacity = iaClamp((k - 1.0) / .3);
+    const r1 = iaClamp((tp - .1) / .7), r2 = iaClamp((tp - 1.0) / .7), rr = (r2 > 0 && r2 < 1) ? r2 : ((r1 > 0 && r1 < 1) ? r1 : 0);
+    E.iaRip.style.opacity = rr ? (1 - rr) * .9 : 0; E.iaRip.style.transform = `translate(${580}px,${410}px) scale(${.4 + rr * 1.6})`; }
+}
+function iaTick(now){
+  if (!$("idleScreen").classList.contains("show")){ IA.raf = 0; return; }
+  iaSet(((now - IA.t0) / 1000) % IA_D);
+  IA.raf = requestAnimationFrame(iaTick);
+}
+function iaStart(){ iaBuild(); iaLayout(); iaFill(); IA.t0 = performance.now(); cancelAnimationFrame(IA.raf); IA.raf = requestAnimationFrame(iaTick); }
+function iaStop(){ cancelAnimationFrame(IA.raf); IA.raf = 0; }
+
 /* ---- v42: rustscherm (tablet staat stil → toont topkaarten) ---- */
 let idleTimer = null, idleRot = null, idleList = [], idleIdx = 0;
 function idleBlocked(){
@@ -3605,6 +3761,7 @@ async function idleBuild(){
   return out;
 }
 function idleDraw(){
+  try { iaFill(); } catch(e){}
   const n = idleList.length, st = $("idleStage");
   if (!n){ st.innerHTML = ""; $("idleName").textContent = L("Ontdek onze volledige catalogus", "Discover our full catalogue"); $("idlePrice").textContent = ""; return; }
   const at = i => idleList[(idleIdx + i + n) % n];
@@ -3619,12 +3776,14 @@ async function showIdle(force){
   { const l = document.querySelector("#brandHome img"); if (l) $("idleLogo").src = l.src; }
   idleList = []; idleIdx = 0; idleDraw();
   el.classList.add("show");
+  try { iaStart(); } catch(e){}
   idleList = await idleBuild(); idleDraw();
   clearInterval(idleRot); idleRot = setInterval(() => { if (idleList.length > 1){ idleIdx = (idleIdx + 1) % idleList.length; idleDraw(); } }, 3800);
 }
 function hideIdle(){
   const el = $("idleScreen"); if (!el.classList.contains("show")) return;
   el.classList.remove("show"); clearInterval(idleRot);
+  try { iaStop(); } catch(e){}
   try { clearWish(); } catch(e){}
   if (LANG !== DEFAULT_LANG) setLang(DEFAULT_LANG, true);
   try { $("searchInput").value = ""; goHome(); } catch(e){}
