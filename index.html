@@ -829,7 +829,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v73</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v75</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -1050,7 +1050,13 @@
         </form>
         <div class="admin-note">Bij een slab zoekt de app zelf een kaartfoto als je geen link invult. Bij sealed producten kan je een foto-link meegeven.</div>
 
-        
+        <hr class="admin-divider">
+        <div class="admin-section-title">TCGdex-prijzen: voorbeeld (Europese Cardmarket-markt)</div>
+        <div class="admin-note" style="margin-top:0;">Proef, alleen lezen: er wordt niets in je sheet aangepast. De app haalt van een tiental uiteenlopende kaarten uit je voorraad de Cardmarket-prijs (EUR) op bij TCGdex en zet die naast je eigen prijzen.</div>
+        <div class="btn-row" style="margin-top:10px;"><button type="button" class="btn btn-primary" id="tdxStart">Toon voorbeeld (10 kaarten)</button><button type="button" class="btn btn-ghost" id="tdxMore">Andere kaarten</button></div>
+        <div class="sf-msg" id="tdxMsg"></div>
+        <div id="tdxOut" style="overflow-x:auto;"></div>
+
         </div>
         <div class="atab" data-tab="weergave">
         <div class="admin-section-title">Foto handmatig instellen</div>
@@ -3678,6 +3684,71 @@ async function preloadPhotos(){
 $("pfStart").addEventListener("click", preloadPhotos);
 $("pfStop").addEventListener("click", () => { pfCancel = true; });
 try { pfShowLast(); } catch(e){}
+
+/* ---- v75: TCGdex-prijzen (Europese Cardmarket-markt) — voorbeeld, alleen lezen ---- */
+function tdxCardId(base){
+  // https://assets.tcgdex.net/en/swsh/swsh3/136  ->  swsh3-136
+  const m = String(base || "").match(/assets\.tcgdex\.net\/[^/]+\/[^/]+\/([^/]+)\/([^/?#]+)/);
+  return m ? m[1] + "-" + m[2] : null;
+}
+function tdxPick(p){
+  // regel: normale 'low' als die bestaat (en > 0), anders de 'low-holo'
+  if (!p) return { v: null, kind: "" };
+  if (typeof p.low === "number" && p.low > 0) return { v: p.low, kind: "normaal" };
+  if (typeof p["low-holo"] === "number" && p["low-holo"] > 0) return { v: p["low-holo"], kind: "holo" };
+  return { v: null, kind: "" };
+}
+async function tdxFetch(card){
+  const base = await resolveImage(card.name, card.set, card.number);
+  const id = tdxCardId(base);
+  if (!id) return { err: "kaart niet gevonden bij TCGdex" };
+  const res = await fetchT(TCGDEX_API + "/" + encodeURIComponent(id), {}, 10000);
+  if (!res.ok) return { err: "TCGdex fout " + res.status, id };
+  const j = await res.json();
+  const cm = j && j.pricing && j.pricing.cardmarket;   // enkel Cardmarket (EUR); tcgplayer negeren we bewust
+  if (!cm) return { err: "geen Cardmarket-prijs", id, variants: j && j.variants };
+  return { id, cm, variants: j.variants || null, pick: tdxPick(cm) };
+}
+function tdxSample(seed){
+  const list = shopCards().filter(c => typeof c.vkp === "number" && c.vkp > 0).sort((a, b) => a.vkp - b.vkp);
+  if (!list.length) return [];
+  const n = Math.min(10, list.length), out = [], used = new Set();
+  for (let i = 0; i < n; i++){
+    let k = Math.min(list.length - 1, Math.floor((i + .5) / n * list.length) + (seed ? Math.floor(Math.random() * Math.max(1, list.length / n / 2)) - 0 : 0));
+    let guard = 0; while (used.has(k) && guard++ < list.length) k = (k + 1) % list.length;
+    used.add(k); out.push(list[k]);
+  }
+  return out;
+}
+let tdxBusy = false;
+async function tdxRun(seed){
+  if (tdxBusy) return; tdxBusy = true;
+  const msg = $("tdxMsg"), out = $("tdxOut");
+  if (!navigator.onLine){ msg.className = "sf-msg err"; msg.textContent = "Geen internet."; tdxBusy = false; return; }
+  const cards = tdxSample(seed);
+  if (!cards.length){ msg.className = "sf-msg err"; msg.textContent = "Geen kaarten met een verkoopprijs gevonden."; tdxBusy = false; return; }
+  msg.className = "sf-msg"; msg.textContent = "Ophalen…"; out.innerHTML = "";
+  const rows = [];
+  for (let i = 0; i < cards.length; i++){
+    msg.textContent = "Ophalen… " + (i + 1) + "/" + cards.length;
+    let r; try { r = await tdxFetch(cards[i]); } catch(e){ r = { err: "geen verbinding" }; }
+    rows.push({ c: cards[i], r });
+  }
+  const f = v => v === null || v === undefined ? "–" : fmtPrice(v);
+  const th = "padding:6px 8px;text-align:right;white-space:nowrap;border-bottom:1.5px solid var(--card-line);";
+  out.innerHTML = `<table style="border-collapse:collapse;font-size:12.5px;width:100%;margin-top:10px;"><thead><tr style="color:var(--grey);text-transform:uppercase;font-size:11px;"><th style="${th}text-align:left;">Kaart</th><th style="${th}">Mijn Lowest</th><th style="${th}">Mijn VKP</th><th style="${th}">TCGdex low</th><th style="${th}">low-holo</th><th style="${th}">trend</th><th style="${th}">avg 7d</th><th style="${th}">TCGdex Lowest</th><th style="${th}">Verschil</th></tr></thead><tbody>` +
+    rows.map(({ c, r }) => {
+      const cm = r.cm || {}, pk = r.pick || { v: null };
+      const diff = (pk.v !== null && c.lowest) ? Math.round((pk.v - c.lowest) / c.lowest * 100) : null;
+      const td = "padding:6px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--card-line);";
+      return `<tr><td style="${td}text-align:left;white-space:normal;"><b>${escapeHTML(c.name)}</b><br><span style="color:var(--grey);">${escapeHTML(c.set)}${c.number ? " · " + escapeHTML(c.number) : ""}</span>${r.err ? `<br><span style="color:#b3261e;">${escapeHTML(r.err)}</span>` : ""}</td><td style="${td}">${f(c.lowest)}</td><td style="${td}">${f(c.vkp)}</td><td style="${td}">${f(cm.low)}</td><td style="${td}">${f(cm["low-holo"])}</td><td style="${td}">${f(cm.trend)}</td><td style="${td}">${f(cm.avg7)}</td><td style="${td}font-weight:800;">${f(pk.v)}${pk.kind ? `<br><span style="font-weight:500;color:var(--grey);">${pk.kind}</span>` : ""}</td><td style="${td}${diff !== null && Math.abs(diff) >= 25 ? "color:#b3261e;font-weight:800;" : ""}">${diff === null ? "–" : (diff > 0 ? "+" : "") + diff + "%"}</td></tr>`;
+    }).join("") + `</tbody></table><div class="admin-note">"TCGdex Lowest" = de normale <i>low</i>-prijs; bestaat die niet, dan de <i>low-holo</i>. Alleen de Cardmarket-prijs in EUR (Europese markt). "Verschil" = TCGdex Lowest tegenover jouw eigen Lowest. Rood = 25% of meer verschil. Cardmarket-gegevens via TCGdex, bijgewerkt: ${(rows.find(x => x.r.cm) || { r: { cm: { updated: "" } } }).r.cm.updated ? new Date(rows.find(x => x.r.cm).r.cm.updated).toLocaleDateString("nl-BE") : "onbekend"}.</div>`;
+  const okN = rows.filter(x => x.r.pick && x.r.pick.v !== null).length;
+  msg.className = "sf-msg ok"; msg.textContent = okN + " van " + rows.length + " kaarten hebben een Cardmarket-prijs bij TCGdex.";
+  tdxBusy = false;
+}
+$("tdxStart").addEventListener("click", () => tdxRun(false));
+$("tdxMore").addEventListener("click", () => tdxRun(true));
 
 /* ---- v69: taalwissel NL/EN (alleen klantdeel) ---- */
 const NL_HERO_P = $("heroP") ? $("heroP").innerHTML : "";
