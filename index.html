@@ -865,7 +865,7 @@
 </main>
 
 <footer>
-  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v88</span>
+  <span class="star">★</span> <span id="footTxt">Pocketdrop — de magie van Pokémon-kaarten, op elke beurs.</span> <span style="opacity:.6">v89</span>
 </footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -888,6 +888,7 @@
         <div class="detail-cell"><div class="label">Conditie</div><div class="value" id="modalCond"></div></div>
       </div>
       <button class="btn btn-yellow" id="modalWish" type="button" style="width:100%;margin-top:14px;"></button>
+      <a id="modalCm" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer" style="display:none;text-decoration:none;text-align:center;box-sizing:border-box;width:100%;margin-top:10px;"></a>
       <div class="staff-box" id="staffPanel" style="display:none;">
         <h4>Personeel · beheer deze kaart</h4>
         <div class="buyavg" id="buyAvg" style="display:none;"><span>Gem. aankoopprijs</span><b id="buyAvgVal">–</b></div>
@@ -2510,7 +2511,7 @@ function renderStaffPanel(){
   if (!adminUnlocked || !c) return;
   { const a = $("sfCm"), raw = String(c.cmLink || ""), m = raw.match(/https?:\/\/[^\s"'<>]+/i);
     const direct = !!m, url = direct ? m[0] : "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + encodeURIComponent((c.name || "") + " " + (c.number || "")).replace(/%20/g, "+");
-    a.style.display = c.manual ? "none" : "block"; a.href = url;
+    a.style.display = "none"; a.href = url;
     a.textContent = direct ? "🔗 Bekijk op Cardmarket ↗" : "🔎 Zoek op Cardmarket ↗"; }
   loadBuyAvg(c); renderDeal(c);
   $("staffManualNote").style.display = c.manual ? "" : "none";
@@ -3641,7 +3642,17 @@ function toggleWish(card){
   wishSync();
   if ($("wishBackdrop").classList.contains("show")) renderWish();
 }
+function updateModalCm(){
+  const a = $("modalCm"); if (!a) return;
+  const c = modalCard;
+  if (!c || c.manual){ a.style.display = "none"; return; }
+  const raw = String(c.cmLink || ""), m = raw.match(/https?:\/\/[^\s"'<>]+/i), direct = !!m;
+  const url = direct ? m[0] : "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + encodeURIComponent((c.name || "") + " " + (c.number || "")).replace(/%20/g, "+");
+  a.href = url; a.style.display = "block";
+  a.textContent = (direct ? "🔗 " + L("Bekijk op Cardmarket", "View on Cardmarket") : "🔎 " + L("Zoek op Cardmarket", "Search on Cardmarket")) + " ↗";
+}
 function updateModalWish(){
+  try { updateModalCm(); } catch(e){}
   const b = $("modalWish"); if (!b || !modalCard) return;
   const on = wish.has(cardId(modalCard));
   b.textContent = on ? "♥ " + L("Op je verlanglijstje · verwijderen", "On your wishlist · remove") : "♡ " + L("Zet op mijn verlanglijstje", "Add to my wishlist");
