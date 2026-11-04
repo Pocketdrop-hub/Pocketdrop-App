@@ -1,4 +1,4 @@
-const CACHE_NAME = "pocketdrop-shell-v134";
+const CACHE_NAME = "pocketdrop-shell-v135";
 const IMG_CACHE = "pocketdrop-img-v1";
 const LIB_CACHE = "pocketdrop-lib-v1";
 const IMG_MAX = 4000;
